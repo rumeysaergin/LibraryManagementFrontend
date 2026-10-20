@@ -1,145 +1,88 @@
+
 <template>
   <main class="library-detail-page">
     <div class="library-detail-container">
 
-      <!-- Geri Dön -->
-      <NuxtLink
-        to="/user/libraries"
-        class="back-link"
-      >
+      <NuxtLink to="/user/libraries" class="back-link">
         <span class="back-icon">←</span>
         <span>Kütüphanelerime Dön</span>
       </NuxtLink>
 
-      <!-- Loading -->
-      <div
-        v-if="loading"
-        class="state-card"
-      >
-        <div class="loading-icon">
-          📚
-        </div>
-
+      <!-- Yükleniyor -->
+      <div v-if="loading" class="state-card">
+        <div class="loading-icon">📚</div>
+        <span class="state-eyebrow">KÜTÜPHANE YÖNETİMİ</span>
         <h2>Kütüphane Yükleniyor</h2>
-
-        <p>
-          Kütüphane bilgileri hazırlanıyor...
-        </p>
-
-        <div class="loading-bar">
-          <span></span>
-        </div>
+        <p>Kütüphane bilgileri hazırlanıyor...</p>
+        <div class="loading-bar"><span></span></div>
       </div>
 
       <!-- Hata -->
-      <div
-        v-else-if="errorMessage"
-        class="state-card error-card"
-      >
-        <div class="state-icon error-icon">
-          !
-        </div>
-
+      <div v-else-if="errorMessage" class="state-card error-card">
+        <div class="state-icon error-icon">!</div>
+        <span class="state-eyebrow">BİLGİLENDİRME</span>
         <h2>Bir Sorun Oluştu</h2>
-
-        <p>
-          {{ errorMessage }}
-        </p>
-
-        <button
-          type="button"
-          class="retry-button"
-          @click="loadLibrary"
-        >
+        <p>{{ errorMessage }}</p>
+        <button type="button" class="retry-button" @click="loadLibrary">
           Tekrar Dene
         </button>
       </div>
 
-      <!-- Kütüphane -->
-      <section
-        v-else-if="library"
-        class="library-detail-card"
-      >
+      <!-- Kütüphane detayları -->
+      <section v-else-if="library" class="library-detail-card">
 
-        <!-- Sol görsel alanı -->
         <div class="library-visual">
+          <div class="visual-top-label">
+            <span class="visual-label-dot"></span>
+            KÜTÜPHANE DETAYI
+          </div>
+
+          <div class="visual-orbit orbit-one"></div>
+          <div class="visual-orbit orbit-two"></div>
+          <div class="visual-orbit orbit-three"></div>
 
           <div class="library-icon-wrapper">
-            <div class="library-icon">
-              📚
-            </div>
+            <div class="library-icon">📚</div>
           </div>
 
-          <div class="visual-decoration decoration-one"></div>
-          <div class="visual-decoration decoration-two"></div>
-
-          <div class="visual-label">
-            <span class="visual-label-dot"></span>
-            Kütüphane
+          <div class="visual-bottom">
+            <span class="visual-bottom-line"></span>
+            <span>Bilginin ve keşfin adresi</span>
           </div>
-
         </div>
 
-        <!-- Sağ bilgi alanı -->
         <div class="library-content">
 
           <div class="library-heading">
-
-            <span class="library-label">
-              KÜTÜPHANE
-            </span>
-
-            <h1>
-              {{ library.name }}
-            </h1>
-
-            
-
+            <span class="library-label">KÜTÜPHANE BİLGİLERİ</span>
+            <h1>{{ library.name }}</h1>
+            <p class="heading-description">
+              Kütüphane bilgilerinizi ve üyelik durumunuzu buradan
+              görüntüleyebilirsiniz.
+            </p>
           </div>
 
-          <!-- Bilgiler -->
           <div class="info-list">
 
-            <!-- Adres -->
             <div class="info-item">
-
               <div class="info-item-left">
-                <div class="info-icon">
-                  📍
-                </div>
-
-                <div>
-                  <span class="info-label">
-                    Adres
-                  </span>
-
-                  <span class="info-value">
-                    {{ library.address }}
-                  </span>
+                <div class="info-icon">⌖</div>
+                <div class="info-text">
+                  <span class="info-label">Adres</span>
+                  <span class="info-value">{{ library.address }}</span>
                 </div>
               </div>
-
             </div>
 
-            <!-- Üyelik -->
             <div class="info-item">
-
               <div class="info-item-left">
-                <div class="info-icon">
-                  ✓
-                </div>
-
-                <div>
-                  <span class="info-label">
-                    Üyelik Durumu
-                  </span>
-
+                <div class="info-icon">✓</div>
+                <div class="info-text">
+                  <span class="info-label">Üyelik Durumu</span>
                   <span
                     :class="[
                       'membership-status',
-                      isMember
-                        ? 'member'
-                        : 'not-member'
+                      isMember ? 'member' : 'not-member'
                     ]"
                   >
                     {{
@@ -154,47 +97,28 @@
               <span
                 :class="[
                   'status-badge',
-                  isMember
-                    ? 'member'
-                    : 'not-member'
+                  isMember ? 'member' : 'not-member'
                 ]"
               >
-                {{
-                  isMember
-                    ? 'ÜYE'
-                    : 'ÜYE DEĞİL'
-                }}
+                <span class="badge-dot"></span>
+                {{ isMember ? 'ÜYE' : 'ÜYE DEĞİL' }}
               </span>
-
             </div>
 
           </div>
 
-          <!-- İşlemler -->
           <div class="actions">
 
-            <!-- Üye -->
-            <div
-              v-if="isMember"
-              class="member-box"
-            >
-              <div class="member-box-icon">
-                ✓
-              </div>
-
-              <div>
-                <strong>
-                  Kütüphaneye Üyesiniz
-                </strong>
-
+            <div v-if="isMember" class="member-box">
+              <div class="member-box-icon">✓</div>
+              <div class="member-box-content">
+                <strong>Kütüphaneye Üyesiniz</strong>
                 <span>
-                  Bu kütüphanenin kitaplarını
-                  keşfedebilirsiniz.
+                  Bu kütüphanenin kitaplarını keşfedebilirsiniz.
                 </span>
               </div>
             </div>
 
-            <!-- Üye değil -->
             <button
               v-else
               type="button"
@@ -203,50 +127,32 @@
               @click="joinLibrary"
             >
               <span class="join-button-icon">
-                {{ joining ? '...' : '+' }}
+                {{ joining ? '…' : '+' }}
               </span>
-
-              <span>
-                {{
-                  joining
-                    ? 'Üye Olunuyor...'
-                    : 'Bu Kütüphaneye Üye Ol'
-                }}
+              <span class="join-button-text">
+                {{ joining ? 'Üye Olunuyor...' : 'Bu Kütüphaneye Üye Ol' }}
               </span>
-
-              <span
-                v-if="!joining"
-                class="button-arrow"
-              >
-                →
-              </span>
+              <span v-if="!joining" class="button-arrow">→</span>
             </button>
 
           </div>
 
-          <!-- İşlem mesajı -->
           <div
             v-if="message"
-            :class="[
-              'action-message',
-              messageType
-            ]"
+            :class="['action-message', messageType]"
           >
             <span class="message-icon">
-              {{
-                messageType === 'success'
-                  ? '✓'
-                  : '!'
-              }}
+              {{ messageType === 'success' ? '✓' : '!' }}
             </span>
+            <span>{{ message }}</span>
+          </div>
 
-            <span>
-              {{ message }}
-            </span>
+          <div class="content-footer">
+            <span class="footer-decoration"></span>
+            <span>Kütüphane Yönetim Sistemi</span>
           </div>
 
         </div>
-
       </section>
 
     </div>
@@ -254,7 +160,6 @@
 </template>
 
 <script setup lang="ts">
-
 interface Library {
   id: string
   name: string
@@ -268,1108 +173,879 @@ interface UserLibrary {
 }
 
 const route = useRoute()
-
 const { apiFetch } = useApi()
 
-const library =
-  ref<Library | null>(null)
+const library = ref<Library | null>(null)
+const userLibraries = ref<UserLibrary[]>([])
+const loading = ref(true)
+const errorMessage = ref('')
+const joining = ref(false)
+const message = ref('')
+const messageType = ref<'success' | 'error'>('success')
 
-const userLibraries =
-  ref<UserLibrary[]>([])
+const isMember = computed(() => {
+  if (!library.value) {
+    return false
+  }
 
-const loading =
-  ref(true)
-
-const errorMessage =
-  ref('')
-
-const joining =
-  ref(false)
-
-const message =
-  ref('')
-
-const messageType =
-  ref<'success' | 'error'>('success')
-
-const isMember =
-  computed(() => {
-
-    if (!library.value) {
-      return false
-    }
-
-    return userLibraries.value.some(
-      item =>
-        item.libraryId ===
-        library.value?.id
-    )
-  })
+  return userLibraries.value.some(
+    item => item.libraryId === library.value?.id
+  )
+})
 
 /*
- * Kütüphane ve kullanıcının
- * üyelik bilgilerini getirir.
+ * Kütüphane ve kullanıcının üyelik bilgilerini getirir.
  */
 const loadLibrary = async () => {
-
   try {
-
     loading.value = true
     errorMessage.value = ''
     message.value = ''
 
-    const libraryId =
-      String(route.params.id)
+    const libraryId = String(route.params.id)
 
     if (!libraryId) {
-      throw new Error(
-        'Kütüphane ID bulunamadı.'
-      )
+      throw new Error('Kütüphane ID bulunamadı.')
     }
 
-    const userId =
-      localStorage.getItem('userId')
+    const userId = localStorage.getItem('userId')
 
     if (!userId) {
-
       errorMessage.value =
         'Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
-
       return
     }
 
-    const [
-      libraryData,
-      userLibraryData
-    ] = await Promise.all([
-
-      apiFetch<Library>(
-        `/api/Library/${libraryId}`
-      ),
-
-      apiFetch<UserLibrary[]>(
-        `/api/UserLibrary/user/${userId}`
-      )
-
+    const [libraryData, userLibraryData] = await Promise.all([
+      apiFetch<Library>(`/api/Library/${libraryId}`),
+      apiFetch<UserLibrary[]>(`/api/UserLibrary/user/${userId}`)
     ])
 
-    library.value =
-      libraryData
-
-    userLibraries.value =
-      userLibraryData
-
-  }
-  catch (error) {
-
+    library.value = libraryData
+    userLibraries.value = userLibraryData
+  } catch (error) {
     console.error(
       'Kütüphane bilgileri alınırken hata oluştu:',
       error
     )
 
-    errorMessage.value =
-      'Kütüphane bilgileri alınamadı.'
-
-  }
-  finally {
-
+    errorMessage.value = 'Kütüphane bilgileri alınamadı.'
+  } finally {
     loading.value = false
-
   }
-
 }
 
 /*
  * Kütüphaneye üye ol.
- *
- * POST işlemi sonrasında backend
- * UserLibrary nesnesi döndürmediği için
- * üyelikler tekrar API'den alınır.
+ * POST sonrasında üyelikler API'den tekrar alınır.
  */
 const joinLibrary = async () => {
-
   try {
-
     if (!library.value) {
       return
     }
 
-    const userId =
-      localStorage.getItem('userId')
+    const userId = localStorage.getItem('userId')
 
     if (!userId) {
-
-      messageType.value =
-        'error'
-
-      message.value =
-        'Üye olmak için giriş yapmalısınız.'
-
+      messageType.value = 'error'
+      message.value = 'Üye olmak için giriş yapmalısınız.'
       return
     }
 
     if (isMember.value) {
-
-      messageType.value =
-        'error'
-
-      message.value =
-        'Bu kütüphaneye zaten üyesiniz.'
-
+      messageType.value = 'error'
+      message.value = 'Bu kütüphaneye zaten üyesiniz.'
       return
     }
 
     joining.value = true
     message.value = ''
 
-    await apiFetch(
-      '/api/UserLibrary',
-      {
-        method: 'POST',
-
-        body: {
-          userId,
-          libraryId:
-            library.value.id
-        }
+    await apiFetch('/api/UserLibrary', {
+      method: 'POST',
+      body: {
+        userId,
+        libraryId: library.value.id
       }
+    })
+
+    const updatedUserLibraries = await apiFetch<UserLibrary[]>(
+      `/api/UserLibrary/user/${userId}`
     )
 
-    /*
-     * Yeni üyelik bilgisini API'den
-     * tekrar getiriyoruz.
-     */
-    const updatedUserLibraries =
-      await apiFetch<UserLibrary[]>(
-        `/api/UserLibrary/user/${userId}`
-      )
+    userLibraries.value = updatedUserLibraries
 
-    userLibraries.value =
-      updatedUserLibraries
-
-    messageType.value =
-      'success'
-
+    messageType.value = 'success'
     message.value =
       `${library.value.name} kütüphanesine başarıyla üye oldunuz.`
-
-  }
-  catch (error) {
-
+  } catch (error) {
     console.error(
       'Kütüphane üyeliği oluşturulurken hata oluştu:',
       error
     )
 
-    messageType.value =
-      'error'
-
+    messageType.value = 'error'
     message.value =
       'Kütüphane üyeliği oluşturulurken bir hata oluştu.'
-
-  }
-  finally {
-
+  } finally {
     joining.value = false
-
   }
-
 }
 
 onMounted(() => {
-
   loadLibrary()
-
 })
-
 </script>
 
 <style scoped>
-
 .library-detail-page {
   min-height: calc(100vh - 75px);
-  background-color: #f5ede4;
-  padding: 42px 24px 70px;
-  color: #4b3021;
+  padding: 42px 24px 75px;
+  color: #493326;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(225, 190, 157, 0.22), transparent 38%),
+    linear-gradient(145deg, #f7f0e8 0%, #eee1d3 52%, #f8f2eb 100%);
 }
 
 .library-detail-container {
-  max-width: 1050px;
+  max-width: 1080px;
   margin: 0 auto;
 }
 
-/* =========================
-   GERİ DÖN
-========================= */
-
+/* Geri dön */
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-
-  margin-bottom: 26px;
-
-  color: #765b48;
+  gap: 10px;
+  margin-bottom: 25px;
+  color: #765640;
   text-decoration: none;
-
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .back-link:hover {
-  color: #a95725;
+  color: #9d5b32;
   transform: translateX(-3px);
 }
 
 .back-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 30px;
-  height: 30px;
-
-  background-color: #fffaf4;
-  border: 1px solid #dfc8b2;
-  border-radius: 9px;
-
-  font-size: 17px;
-
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  background: #fffaf5;
+  border: 1px solid #e5d2bf;
+  border-radius: 11px;
+  font-size: 18px;
+  transition: background 0.2s ease;
 }
 
 .back-link:hover .back-icon {
-  background-color: #f2dfce;
-  border-color: #cfae91;
+  background: #f0dfce;
 }
 
-/* =========================
-   ANA KART
-========================= */
-
+/* Ana kart */
 .library-detail-card {
   display: grid;
-  grid-template-columns: 390px 1fr;
-
-  min-height: 500px;
-
+  grid-template-columns: minmax(290px, 0.85fr) minmax(0, 1.15fr);
+  min-height: 520px;
   overflow: hidden;
-
-  background-color: #fffaf4;
-
-  border: 1px solid #dfc8b2;
+  background: rgba(255, 251, 246, 0.97);
+  border: 1px solid #e5d2bf;
   border-radius: 24px;
-
-  box-shadow:
-    0 16px 45px rgba(91, 55, 31, 0.08);
+  box-shadow: 0 18px 50px rgba(77, 49, 29, 0.09);
 }
 
-/* =========================
-   SOL GÖRSEL
-========================= */
-
+/* Sol görsel */
 .library-visual {
   position: relative;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
+  min-height: 520px;
   overflow: hidden;
-
-  min-height: 500px;
-
+  isolation: isolate;
   background:
-    linear-gradient(
-      145deg,
-      #ead6c2 0%,
-      #f2dfce 48%,
-      #e5cdb6 100%
-    );
+    linear-gradient(145deg, #f0dfce 0%, #e6cbb1 55%, #dfbea0 100%);
 }
 
-.library-icon-wrapper {
-  position: relative;
-  z-index: 2;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 235px;
-  height: 235px;
-
-  background-color: rgba(255, 250, 244, 0.72);
-
-  border: 1px solid
-    rgba(169, 87, 37, 0.16);
-
-  border-radius: 50%;
-
-  box-shadow:
-    0 18px 45px rgba(103, 62, 35, 0.12);
-}
-
-.library-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 175px;
-  height: 175px;
-
-  background-color: #fffaf4;
-
-  border-radius: 42px;
-
-  font-size: 82px;
-
-  box-shadow:
-    0 10px 28px rgba(91, 55, 31, 0.1);
-}
-
-.visual-decoration {
+.visual-top-label {
   position: absolute;
-
-  border-radius: 50%;
-
-  background-color: rgba(
-    255,
-    250,
-    244,
-    0.25
-  );
-}
-
-.decoration-one {
-  width: 180px;
-  height: 180px;
-
-  top: -70px;
-  left: -60px;
-}
-
-.decoration-two {
-  width: 220px;
-  height: 220px;
-
-  right: -100px;
-  bottom: -100px;
-}
-
-.visual-label {
-  position: absolute;
+  top: 26px;
+  left: 26px;
   z-index: 3;
-
-  left: 28px;
-  bottom: 26px;
-
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
-  padding: 9px 13px;
-
-  background-color: rgba(
-    255,
-    250,
-    244,
-    0.86
-  );
-
-  border: 1px solid
-    rgba(169, 87, 37, 0.12);
-
+  padding: 9px 12px;
+  color: #77553d;
+  background: rgba(255, 250, 244, 0.77);
+  border: 1px solid rgba(169, 112, 71, 0.18);
   border-radius: 999px;
-
-  color: #765b48;
-
-  font-size: 12px;
-  font-weight: 700;
-
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .visual-label-dot {
   width: 7px;
   height: 7px;
-
-  background-color: #a95725;
-
+  background: #a45d31;
   border-radius: 50%;
 }
 
-/* =========================
-   SAĞ İÇERİK
-========================= */
+.library-icon-wrapper {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 245px;
+  height: 245px;
+  background: rgba(255, 250, 244, 0.34);
+  border: 1px solid rgba(255, 250, 244, 0.65);
+  border-radius: 50%;
+  box-shadow: 0 15px 45px rgba(103, 62, 35, 0.07);
+}
 
+.library-icon {
+  display: grid;
+  place-items: center;
+  width: 175px;
+  height: 175px;
+  background: #fffaf4;
+  border: 1px solid #f0dfce;
+  border-radius: 43px;
+  box-shadow: 0 16px 36px rgba(91, 55, 31, 0.13);
+  font-size: 78px;
+  animation: bookFloat 4s ease-in-out infinite;
+}
+
+.visual-orbit {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid rgba(159, 101, 58, 0.16);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbit-one {
+  width: 360px;
+  height: 360px;
+}
+
+.orbit-two {
+  width: 460px;
+  height: 460px;
+}
+
+.orbit-three {
+  width: 560px;
+  height: 560px;
+  border-color: rgba(159, 101, 58, 0.1);
+}
+
+.visual-bottom {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  left: 25px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #806149;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.visual-bottom-line {
+  width: 24px;
+  height: 2px;
+  background: #b67b4d;
+  border-radius: 99px;
+}
+
+/* Sağ içerik */
 .library-content {
   display: flex;
   flex-direction: column;
-
-  padding: 52px 48px;
+  min-width: 0;
+  padding: 48px 44px 30px;
 }
 
 .library-heading {
-  margin-bottom: 30px;
+  margin-bottom: 29px;
 }
 
 .library-label {
   display: inline-block;
-
-  margin-bottom: 10px;
-
-  color: #a95725;
-
-  font-size: 11px;
+  margin-bottom: 12px;
+  color: #a36339;
+  font-size: 10px;
   font-weight: 800;
-
   letter-spacing: 1.8px;
 }
 
-.library-info h1 {
+.library-heading h1 {
   margin: 0;
-
-  color: #4b3021;
-
-  font-size: 36px;
-  line-height: 1.15;
-
+  color: #493326;
+  font-size: clamp(27px, 3vw, 37px);
   font-weight: 800;
-
-  word-break: break-word;
+  line-height: 1.2;
+  letter-spacing: -0.9px;
+  overflow-wrap: anywhere;
 }
 
-.library-description {
-  max-width: 500px;
-
-  margin: 14px 0 0;
-
-  color: #765b48;
-
-  font-size: 14px;
-  line-height: 1.7;
+.heading-description {
+  margin: 13px 0 0;
+  color: #8a7462;
+  font-size: 13px;
+  line-height: 1.8;
 }
 
-/* =========================
-   BİLGİLER
-========================= */
-
+/* Bilgi alanları */
 .info-list {
-  border-top: 1px solid #ead8c6;
+  border-top: 1px solid #ecded0;
 }
 
 .info-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  gap: 20px;
-
-  padding: 18px 0;
-
-  border-bottom: 1px solid #ead8c6;
+  gap: 15px;
+  padding: 19px 0;
+  border-bottom: 1px solid #ecded0;
 }
 
 .info-item-left {
   display: flex;
   align-items: center;
-
   gap: 13px;
-
   min-width: 0;
 }
 
 .info-icon {
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  color: #9b6038;
+  background: #f5e7d8;
+  border: 1px solid #ead6c2;
+  border-radius: 13px;
+  font-size: 19px;
+}
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 39px;
-  height: 39px;
-
-  background-color: #f2dfce;
-
-  border-radius: 11px;
-
-  font-size: 17px;
+.info-text {
+  min-width: 0;
 }
 
 .info-label {
   display: block;
-
-  margin-bottom: 4px;
-
-  color: #927663;
-
-  font-size: 11px;
+  margin-bottom: 5px;
+  color: #a08875;
+  font-size: 10px;
   font-weight: 800;
-
+  letter-spacing: 0.9px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
 }
 
 .info-value {
   display: block;
-
-  color: #4b3021;
-
-  font-size: 14px;
+  color: #4e3728;
+  font-size: 13px;
   font-weight: 600;
-
-  line-height: 1.5;
-
-  word-break: break-word;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .membership-status {
   display: block;
-
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.6;
 }
 
 .membership-status.member {
-  color: #5c8b58;
+  color: #5b8051;
 }
 
 .membership-status.not-member {
-  color: #927663;
+  color: #a36d49;
 }
 
-/* =========================
-   DURUM BADGE
-========================= */
-
+/* Üyelik rozeti */
 .status-badge {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
-
+  gap: 6px;
   padding: 7px 10px;
-
   border-radius: 999px;
-
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-
-  letter-spacing: 0.7px;
+  letter-spacing: 0.6px;
 }
 
 .status-badge.member {
-  background-color: #e8f1e5;
-  border: 1px solid #c7ddc1;
-  color: #5c8b58;
+  color: #52794a;
+  background: #edf4e9;
+  border: 1px solid #d5e4cd;
 }
 
 .status-badge.not-member {
-  background-color: #f2dfce;
-  border: 1px solid #dfc8b2;
-  color: #8a6249;
+  color: #946747;
+  background: #f7eadc;
+  border: 1px solid #ead5c0;
 }
 
-/* =========================
-   İŞLEMLER
-========================= */
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
 
+/* İşlemler */
 .actions {
-  margin-top: 30px;
+  margin-top: 26px;
 }
 
 .join-button {
-  width: 100%;
-
   display: flex;
   align-items: center;
-
   gap: 12px;
-
-  padding: 14px 17px;
-
-  background-color: #a95725;
-
-  border: 1px solid #a95725;
+  width: 100%;
+  padding: 14px 16px;
+  color: #fffaf5;
+  background: #98603b;
+  border: 1px solid #98603b;
   border-radius: 12px;
-
-  color: #fffaf4;
-
-  font-size: 14px;
-  font-weight: 700;
-
+  font-size: 13px;
+  font-weight: 750;
+  text-align: left;
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .join-button:hover:not(:disabled) {
-  background-color: #8e451e;
-
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 7px 18px rgba(142, 69, 30, 0.2);
+  background: #7f4d2e;
+  border-color: #7f4d2e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(127, 77, 46, 0.18);
 }
 
 .join-button:disabled {
-  cursor: not-allowed;
   opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .join-button-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 29px;
+  height: 29px;
+  color: #fffaf5;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  font-size: 20px;
+}
 
-  width: 27px;
-  height: 27px;
-
-  background-color: rgba(
-    255,
-    250,
-    244,
-    0.16
-  );
-
-  border-radius: 7px;
-
-  font-size: 18px;
+.join-button-text {
+  flex: 1;
 }
 
 .button-arrow {
   margin-left: auto;
-
-  font-size: 18px;
+  font-size: 20px;
+  transition: transform 0.2s ease;
 }
 
-/* =========================
-   ÜYE DURUMU
-========================= */
+.join-button:hover:not(:disabled) .button-arrow {
+  transform: translateX(3px);
+}
 
+/* Üyelik başarılı */
 .member-box {
   display: flex;
   align-items: center;
-
-  gap: 12px;
-
-  padding: 14px 16px;
-
-  background-color: #edf4ea;
-
-  border: 1px solid #cbdcc6;
+  gap: 13px;
+  padding: 15px;
+  background: #eef4e9;
+  border: 1px solid #d3e3ca;
   border-radius: 12px;
-
-  color: #5c8b58;
 }
 
 .member-box-icon {
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 30px;
-  height: 30px;
-
-  background-color: #dcebd8;
-
-  border-radius: 8px;
-
+  width: 35px;
+  height: 35px;
+  color: #557b4d;
+  background: #dcebd5;
+  border-radius: 10px;
+  font-size: 17px;
   font-weight: 800;
 }
 
-.member-box strong {
+.member-box-content strong {
   display: block;
-
-  margin-bottom: 3px;
-
+  margin-bottom: 5px;
+  color: #55774d;
   font-size: 13px;
 }
 
-.member-box span {
+.member-box-content span {
   display: block;
-
-  color: #6e856a;
-
-  font-size: 12px;
+  color: #71856a;
+  font-size: 11px;
+  line-height: 1.7;
 }
 
-/* =========================
-   MESAJ
-========================= */
-
+/* İşlem mesajları */
 .action-message {
   display: flex;
-  align-items: center;
-
-  gap: 9px;
-
+  align-items: flex-start;
+  gap: 10px;
   margin-top: 15px;
-
   padding: 12px 14px;
-
   border-radius: 10px;
-
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .message-icon {
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   width: 22px;
   height: 22px;
-
   border-radius: 50%;
-
   font-size: 12px;
   font-weight: 800;
 }
 
 .action-message.success {
-  background-color: #edf4ea;
-
-  border: 1px solid #cbdcc6;
-
-  color: #5c8b58;
+  color: #55794e;
+  background: #edf4e9;
+  border: 1px solid #d3e3ca;
 }
 
 .action-message.success .message-icon {
-  background-color: #dcebd8;
+  background: #dcebd5;
 }
 
 .action-message.error {
-  background-color: #fae9e5;
-
-  border: 1px solid #e7c2b9;
-
-  color: #a84d3d;
+  color: #a34f42;
+  background: #fbede8;
+  border: 1px solid #efd2c9;
 }
 
 .action-message.error .message-icon {
-  background-color: #f1d4ce;
+  background: #f3dcd4;
 }
 
-/* =========================
-   LOADING / ERROR
-========================= */
+/* Alt bilgi */
+.content-footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 28px;
+  color: #b09a87;
+  font-size: 10px;
+  font-weight: 600;
+}
 
+.footer-decoration {
+  width: 20px;
+  height: 1px;
+  background: #c7a384;
+}
+
+/* Yüklenme ve hata ekranları */
 .state-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   min-height: 390px;
-
-  padding: 40px;
-
-  background-color: #fffaf4;
-
-  border: 1px solid #dfc8b2;
-  border-radius: 22px;
-
+  padding: 40px 24px;
   text-align: center;
-
-  box-shadow:
-    0 12px 35px rgba(91, 55, 31, 0.06);
+  background: rgba(255, 251, 246, 0.96);
+  border: 1px solid #e5d2bf;
+  border-radius: 22px;
+  box-shadow: 0 14px 40px rgba(77, 49, 29, 0.07);
 }
 
 .loading-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
+  place-items: center;
   width: 72px;
   height: 72px;
-
-  margin-bottom: 20px;
-
-  background-color: #f2dfce;
-
-  border-radius: 20px;
-
+  margin-bottom: 22px;
+  background: #f3e3d2;
+  border: 1px solid #ead3bd;
+  border-radius: 21px;
   font-size: 32px;
+  animation: bookFloat 2s ease-in-out infinite;
+}
 
-  animation: gentleFloat 1.8s ease-in-out infinite;
+.state-eyebrow {
+  margin-bottom: 9px;
+  color: #a36339;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
 }
 
 .state-card h2 {
-  margin: 0 0 8px;
-
-  color: #4b3021;
-
-  font-size: 20px;
+  margin: 0 0 10px;
+  color: #493326;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .state-card p {
+  max-width: 480px;
   margin: 0;
-
-  color: #765b48;
-
-  font-size: 14px;
+  color: #8a7462;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 .loading-bar {
   width: 180px;
   height: 4px;
-
-  margin-top: 22px;
-
+  margin-top: 24px;
   overflow: hidden;
-
-  background-color: #ead8c6;
-
+  background: #ead8c6;
   border-radius: 99px;
 }
 
 .loading-bar span {
   display: block;
-
-  width: 60%;
+  width: 45%;
   height: 100%;
-
-  background-color: #a95725;
-
+  background: #98603b;
   border-radius: inherit;
-
-  animation: loadingMove 1.2s ease-in-out infinite;
+  animation: loadingMove 1.4s ease-in-out infinite;
 }
 
 .error-card {
-  background-color: #fff8f6;
-
-  border-color: #e7c2b9;
+  background: #fff9f6;
+  border-color: #edd2c9;
 }
 
-.state-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 60px;
-  height: 60px;
-
+.error-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
   margin-bottom: 18px;
-
+  color: #a34f42;
+  background: #f9e9e4;
+  border: 1px solid #efd2c9;
   border-radius: 18px;
-
   font-size: 25px;
   font-weight: 800;
 }
 
-.error-icon {
-  background-color: #fae9e5;
-
-  color: #a84d3d;
-}
-
 .retry-button {
   margin-top: 22px;
-
-  padding: 10px 17px;
-
-  background-color: #a95725;
-
-  border: none;
-  border-radius: 9px;
-
-  color: #fffaf4;
-
-  font-size: 13px;
-  font-weight: 700;
-
+  padding: 11px 18px;
+  color: #fffaf5;
+  background: #98603b;
+  border: 1px solid #98603b;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 750;
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .retry-button:hover {
-  background-color: #8e451e;
+  background: #7f4d2e;
 }
 
-/* =========================
-   ANİMASYONLAR
-========================= */
+/* Klavye erişilebilirliği */
+.back-link:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(169, 106, 61, 0.45);
+  outline-offset: 3px;
+}
 
-@keyframes gentleFloat {
-
-  0%,
-  100% {
+/* Animasyonlar */
+@keyframes bookFloat {
+  0%, 100% {
     transform: translateY(0);
   }
 
   50% {
     transform: translateY(-5px);
   }
-
 }
 
 @keyframes loadingMove {
-
   0% {
-    transform: translateX(-100%);
-  }
-
-  50% {
-    transform: translateX(70%);
+    transform: translateX(-110%);
   }
 
   100% {
-    transform: translateX(220%);
+    transform: translateX(250%);
   }
-
 }
 
-/* =========================
-   TABLET
-========================= */
-
+/* Tablet */
 @media (max-width: 850px) {
-
   .library-detail-card {
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
   }
 
   .library-content {
-    padding: 40px 32px;
+    padding: 38px 30px 26px;
   }
 
   .library-icon-wrapper {
-    width: 190px;
-    height: 190px;
+    width: 205px;
+    height: 205px;
   }
 
   .library-icon {
-    width: 140px;
-    height: 140px;
-
-    font-size: 65px;
+    width: 150px;
+    height: 150px;
+    font-size: 67px;
   }
-
-  .library-info h1 {
-    font-size: 30px;
-  }
-
 }
 
-/* =========================
-   MOBİL
-========================= */
-
-@media (max-width: 700px) {
-
+/* Mobil */
+@media (max-width: 680px) {
   .library-detail-page {
-    padding: 30px 16px 50px;
-  }
-
-  .back-link {
-    margin-bottom: 20px;
+    padding: 28px 16px 50px;
   }
 
   .library-detail-card {
     grid-template-columns: 1fr;
-
     border-radius: 20px;
   }
 
   .library-visual {
-    min-height: 300px;
+    min-height: 285px;
   }
 
   .library-icon-wrapper {
-    width: 170px;
-    height: 170px;
+    width: 165px;
+    height: 165px;
   }
 
   .library-icon {
-    width: 125px;
-    height: 125px;
-
-    border-radius: 32px;
-
-    font-size: 58px;
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
+    font-size: 55px;
   }
 
-  .visual-label {
-    left: 20px;
-    bottom: 20px;
+  .orbit-one {
+    width: 260px;
+    height: 260px;
+  }
+
+  .orbit-two {
+    width: 350px;
+    height: 350px;
+  }
+
+  .orbit-three {
+    width: 430px;
+    height: 430px;
+  }
+
+  .visual-top-label {
+    top: 18px;
+    left: 18px;
+  }
+
+  .visual-bottom {
+    bottom: 17px;
   }
 
   .library-content {
-    padding: 32px 24px 30px;
+    padding: 30px 24px 24px;
   }
 
   .library-heading {
-    margin-bottom: 25px;
+    margin-bottom: 23px;
   }
 
-  .library-info h1 {
-    font-size: 28px;
+  .library-heading h1 {
+    font-size: 29px;
   }
 
-  .info-item {
-    align-items: flex-start;
+  .content-footer {
+    padding-top: 24px;
   }
-
 }
 
-/* =========================
-   KÜÇÜK MOBİL
-========================= */
-
-@media (max-width: 480px) {
-
+/* Küçük ekranlar */
+@media (max-width: 420px) {
   .library-detail-page {
-    padding-left: 12px;
     padding-right: 12px;
+    padding-left: 12px;
   }
 
   .library-visual {
-    min-height: 270px;
+    min-height: 255px;
   }
 
   .library-content {
-    padding: 27px 19px;
+    padding: 25px 18px 20px;
   }
 
-  .library-info h1 {
+  .library-heading h1 {
     font-size: 25px;
   }
 
-  .library-description {
-    font-size: 13px;
+  .heading-description {
+    font-size: 12px;
   }
 
   .info-item {
-    flex-direction: column;
     align-items: flex-start;
-
     gap: 10px;
   }
 
   .status-badge {
-    align-self: flex-start;
+    margin-top: 2px;
   }
 
-  .member-box {
-    align-items: flex-start;
+  .info-item-left {
+    gap: 10px;
   }
 
+  .info-icon {
+    width: 36px;
+    height: 36px;
+  }
 }
 
+/* Hareket hassasiyeti */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 </style>

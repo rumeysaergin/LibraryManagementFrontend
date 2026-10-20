@@ -5,19 +5,49 @@ export const useApi = () => {
         options: any = {}
     ) => {
 
-        const token = localStorage.getItem('token')
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
-        return await $fetch<T>(
-            `https://localhost:7205${url}`,
-            {
-                ...options,
+        const headers = {
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
 
-                headers: {
-                    ...(options.headers || {}),
-                    Authorization: `Bearer ${token}`
+        // Birincil olarak https://localhost:7205 portunu dener
+        try {
+            return await $fetch<T>(
+                `https://localhost:7205${url}`,
+                {
+                    ...options,
+                    headers
+                }
+            )
+        }
+        catch (err: any) {
+            // Eğer SSL sertifikası veya port bağlantı hatası oluşursa http://localhost:5000 veya 5213 portlarını dener
+            try {
+                return await $fetch<T>(
+                    `http://localhost:5000${url}`,
+                    {
+                        ...options,
+                        headers
+                    }
+                )
+            }
+            catch {
+                try {
+                    return await $fetch<T>(
+                        `http://localhost:5213${url}`,
+                        {
+                            ...options,
+                            headers
+                        }
+                    )
+                }
+                catch {
+                    throw err
                 }
             }
-        )
+        }
     }
 
     return {

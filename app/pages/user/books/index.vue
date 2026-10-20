@@ -1,230 +1,266 @@
-vue
+
 <template>
   <main class="books-page">
     <div class="books-container">
-      <!-- Geri Dön -->
       <NuxtLink to="/user" class="back-link">
         ← Kullanıcı Paneline Dön
       </NuxtLink>
 
-      <!-- Sayfa Başlığı -->
-      <div class="page-header">
-        <div>
+      <header class="page-header">
+        <div class="header-content">
+          <span class="page-eyebrow">KİTAP KOLEKSİYONU</span>
           <h1>Kitaplar</h1>
           <p>
             Üye olduğunuz kütüphanelerde bulunan kitapları
             inceleyebilir ve ödünç alabilirsiniz.
           </p>
         </div>
-      </div>
+        <div class="header-icon" aria-hidden="true">📚</div>
+      </header>
 
-      <!-- Kütüphane üyeliği yoksa -->
       <div
         v-if="!loading && !errorMessage && memberLibraries.length === 0"
-        class="state-message"
+        class="message-card"
       >
-        Üye olduğunuz bir kütüphane bulunmuyor.
+        <div class="empty-icon">📚</div>
+        <h3>Henüz bir kütüphaneye üye değilsiniz.</h3>
+        <p>
+          Kitapları görüntüleyebilmek ve ödünç alabilmek için
+          bir kütüphaneye üye olmanız gerekiyor.
+        </p>
       </div>
 
-      <!-- Arama ve Filtreler -->
-      <div v-else class="filters">
-        <div class="search-box">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Kitap adı, ISBN veya yazar ara..."
-          />
+      <template v-else>
+        <section class="filters-section">
+          <div class="section-heading">
+            <div>
+              <h2>Kitap Keşfet</h2>
+              <p>Aradığınız kitapları filtreleyerek kolayca bulun.</p>
+            </div>
+          </div>
+
+          <div class="filters">
+            <div class="search-box">
+              <span class="search-icon">⌕</span>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Kitap adı, ISBN veya yazar ara..."
+              />
+            </div>
+
+            <select v-model="selectedLibrary" aria-label="Kütüphane filtresi">
+              <option value="">Tüm Kütüphaneler</option>
+              <option
+                v-for="library in memberLibraries"
+                :key="library.id"
+                :value="library.id"
+              >
+                {{ library.name }}
+              </option>
+            </select>
+
+            <select v-model="selectedCategory" aria-label="Kategori filtresi">
+              <option value="">Tüm Kategoriler</option>
+              <option
+                v-for="category in categories"
+                :key="category.id"
+                :value="category.id"
+              >
+                {{ category.name }}
+              </option>
+            </select>
+
+            <select v-model="selectedAuthor" aria-label="Yazar filtresi">
+              <option value="">Tüm Yazarlar</option>
+              <option
+                v-for="author in authors"
+                :key="author.id"
+                :value="author.id"
+              >
+                {{ getAuthorName(author) }}
+              </option>
+            </select>
+
+            <select v-model="selectedStock" aria-label="Stok filtresi">
+              <option value="">Tüm Kitaplar</option>
+              <option value="available">Stokta Olanlar</option>
+              <option value="unavailable">Stokta Olmayanlar</option>
+            </select>
+          </div>
+        </section>
+
+        <div v-if="loading" class="message-card">
+          <div class="loading-icon">📖</div>
+          Kitaplar yükleniyor...
         </div>
 
-        <select v-model="selectedLibrary">
-          <option value="">Tüm Kütüphaneler</option>
-          <option
-            v-for="library in memberLibraries"
-            :key="library.id"
-            :value="library.id"
-          >
-            {{ library.name }}
-          </option>
-        </select>
+        <div v-else-if="errorMessage" class="message-card error-message">
+          <p>{{ errorMessage }}</p>
+          <button class="secondary-button" @click="loadBooks">
+            Tekrar Dene
+          </button>
+        </div>
 
-        <select v-model="selectedCategory">
-          <option value="">Tüm Kategoriler</option>
-          <option
-            v-for="category in categories"
-            :key="category.id"
-            :value="category.id"
-          >
-            {{ category.name }}
-          </option>
-        </select>
-
-        <select v-model="selectedAuthor">
-          <option value="">Tüm Yazarlar</option>
-          <option
-            v-for="author in authors"
-            :key="author.id"
-            :value="author.id"
-          >
-            {{ getAuthorName(author) }}
-          </option>
-        </select>
-
-        <select v-model="selectedStock">
-          <option value="">Tüm Kitaplar</option>
-          <option value="available">Stokta Olanlar</option>
-          <option value="unavailable">Stokta Olmayanlar</option>
-        </select>
-      </div>
-
-      <!-- Yükleniyor -->
-      <div v-if="loading" class="state-message">
-        Kitaplar yükleniyor...
-      </div>
-
-      <!-- Hata -->
-      <div v-else-if="errorMessage" class="state-message error">
-        {{ errorMessage }}
-      </div>
-
-      <!-- Kitaplar -->
-      <div
-        v-else-if="filteredBooks.length > 0"
-        class="books-grid"
-      >
-        <div
-          v-for="book in filteredBooks"
-          :key="book.id"
-          class="book-card"
-        >
-          <!-- Kitap bilgileri -->
-          <NuxtLink
-            :to="`/user/books/${book.id}`"
-            class="book-content"
-          >
-            <div class="book-cover">
-              📖
+        <section v-else class="books-section">
+          <div class="section-heading results-heading">
+            <div>
+              <h2>Kitap Koleksiyonu</h2>
+              <p>Üye olduğunuz kütüphanelerdeki kitaplar.</p>
             </div>
 
-            <div class="book-info">
-              <span class="category-name">
-                {{ getCategoryName(book.categoryId) }}
-              </span>
+            <span class="result-count">
+              {{ filteredBooks.length }} kitap
+            </span>
+          </div>
 
-              <h2>{{ book.title }}</h2>
-
-              <p class="author-name">
-                {{ getAuthorNameById(book.authorId) }}
-              </p>
-
-              <p class="isbn">
-                ISBN: {{ book.isbn }}
-              </p>
-
-              <div
-                :class="[
-                  'stock-info',
-                  getTotalQuantity(book.id) > 0
-                    ? 'available'
-                    : 'unavailable'
-                ]"
-              >
-                <span>
-                  {{
-                    getTotalQuantity(book.id) > 0
-                      ? `${getTotalQuantity(book.id)} adet mevcut`
-                      : 'Stokta yok'
-                  }}
-                </span>
-              </div>
-            </div>
-          </NuxtLink>
-
-          <!-- Kütüphaneler -->
-          <div class="libraries-section">
-            <div class="libraries-title">
-              Üye Olduğunuz Kütüphanelerdeki Durum
-            </div>
-
-            <div
-              v-if="getLibraryBooks(book.id).length > 0"
-              class="library-list"
+          <div v-if="filteredBooks.length > 0" class="books-grid">
+            <article
+              v-for="book in filteredBooks"
+              :key="book.id"
+              class="book-card"
             >
-              <div
-                v-for="libraryBook in getLibraryBooks(book.id)"
-                :key="libraryBook.id"
-                class="library-item"
+              <NuxtLink
+                :to="`/user/books/${book.id}`"
+                class="book-content"
               >
-                <div class="library-info">
-                  <span class="library-name">
-                    📍 {{ getLibraryName(libraryBook.libraryId) }}
+                <div class="book-cover">
+                  <div class="book-cover-icon">📖</div>
+                  <span class="cover-caption">KİTAP KOLEKSİYONU</span>
+                </div>
+
+                <div class="book-info">
+                  <span class="category-name">
+                    {{ getCategoryName(book.categoryId) }}
                   </span>
 
-                  <span
+                  <h3>{{ book.title }}</h3>
+
+                  <p class="author-name">
+                    {{ getAuthorNameById(book.authorId) }}
+                  </p>
+
+                  <p class="isbn">
+                    ISBN: {{ book.isbn }}
+                  </p>
+
+                  <div
                     :class="[
-                      'library-stock',
-                      libraryBook.quantity > 0
+                      'stock-info',
+                      getTotalQuantity(book.id) > 0
                         ? 'available'
                         : 'unavailable'
                     ]"
                   >
+                    <span class="stock-dot"></span>
                     {{
-                      libraryBook.quantity > 0
-                        ? `${libraryBook.quantity} adet mevcut`
+                      getTotalQuantity(book.id) > 0
+                        ? `${getTotalQuantity(book.id)} adet mevcut`
                         : 'Stokta yok'
                     }}
-                  </span>
+                  </div>
+                </div>
+              </NuxtLink>
+
+              <div class="libraries-section">
+                <div class="libraries-title">Kütüphane Stokları</div>
+
+                <div
+                  v-if="getLibraryBooks(book.id).length > 0"
+                  class="library-list"
+                >
+                  <div
+                    v-for="libraryBook in getLibraryBooks(book.id)"
+                    :key="libraryBook.id"
+                    class="library-item"
+                  >
+                    <div class="library-info">
+                      <span class="library-name">
+                        <span class="location-icon">⌖</span>
+                        {{ getLibraryName(libraryBook.libraryId) }}
+                      </span>
+
+                      <span
+                        :class="[
+                          'library-stock',
+                          libraryBook.quantity > 0
+                            ? 'available'
+                            : 'unavailable'
+                        ]"
+                      >
+                        {{
+                          libraryBook.quantity > 0
+                            ? `${libraryBook.quantity} adet mevcut`
+                            : 'Stokta yok'
+                        }}
+                      </span>
+                    </div>
+
+                    <button
+                      v-if="libraryBook.quantity > 0"
+                      type="button"
+                      class="borrow-button"
+                      :disabled="borrowingLibraryBookId === libraryBook.id"
+                      @click.stop="borrowBook(book, libraryBook)"
+                    >
+                      {{
+                        borrowingLibraryBookId === libraryBook.id
+                          ? 'Ödünç Alınıyor...'
+                          : 'Ödünç Al'
+                      }}
+                    </button>
+
+                    <button
+                      v-else
+                      type="button"
+                      class="borrow-button disabled"
+                      disabled
+                    >
+                      Stokta Yok
+                    </button>
+                  </div>
                 </div>
 
-                <button
-                  v-if="libraryBook.quantity > 0"
-                  type="button"
-                  class="borrow-button"
-                  :disabled="borrowingLibraryBookId === libraryBook.id"
-                  @click.stop="borrowBook(book, libraryBook)"
-                >
-                  {{
-                    borrowingLibraryBookId === libraryBook.id
-                      ? 'Ödünç Alınıyor...'
-                      : 'Ödünç Al'
-                  }}
-                </button>
-
-                <button
-                  v-else
-                  type="button"
-                  class="borrow-button disabled"
-                  disabled
-                >
-                  Stokta Yok
-                </button>
+                <div v-else class="no-library-message">
+                  Bu kitap üye olduğunuz kütüphanelerde bulunmuyor.
+                </div>
               </div>
-            </div>
 
-            <div v-else class="no-library-message">
-              Bu kitap üye olduğunuz kütüphanelerde bulunmuyor.
-            </div>
+              <div
+                v-if="borrowMessage[book.id]"
+                :class="[
+                  'borrow-message',
+                  borrowMessage[book.id].type
+                ]"
+              >
+                {{ borrowMessage[book.id].text }}
+              </div>
+            </article>
           </div>
 
-          <!-- Ödünç alma sonucu -->
-          <div
-            v-if="borrowMessage[book.id]"
-            :class="[
-              'borrow-message',
-              borrowMessage[book.id].type
-            ]"
-          >
-            {{ borrowMessage[book.id].text }}
+          <div v-else class="message-card empty-message">
+            <div class="empty-icon">🔎</div>
+            <h3>Aradığınız kitap bulunamadı.</h3>
+            <p>
+              Farklı bir arama terimi deneyebilir veya filtreleri
+              değiştirebilirsiniz.
+            </p>
+            <button
+              type="button"
+              class="secondary-button"
+              @click="
+                searchQuery = '';
+                selectedLibrary = '';
+                selectedCategory = '';
+                selectedAuthor = '';
+                selectedStock = ''
+              "
+            >
+              Filtreleri Temizle
+            </button>
           </div>
-        </div>
-      </div>
-
-      <!-- Kitap bulunamadı -->
-      <div
-        v-else-if="!loading && !errorMessage"
-        class="empty-message"
-      >
-        Arama kriterlerinize uygun kitap bulunamadı.
-      </div>
+        </section>
+      </template>
     </div>
   </main>
 </template>
@@ -296,9 +332,6 @@ const selectedStock = ref('')
 const borrowingLibraryBookId = ref<string | null>(null)
 const borrowMessage = ref<Record<string, BorrowMessage>>({})
 
-/*
- * Yazar adını oluşturur.
- */
 const getAuthorName = (author: Author) => {
   if (author.name) {
     return author.name
@@ -310,24 +343,14 @@ const getAuthorName = (author: Author) => {
   return fullName || 'Bilinmeyen Yazar'
 }
 
-/*
- * ID üzerinden yazar bulur.
- */
 const getAuthorNameById = (authorId: string) => {
   const author = authors.value.find(
     item => item.id === authorId
   )
 
-  if (!author) {
-    return 'Bilinmeyen Yazar'
-  }
-
-  return getAuthorName(author)
+  return author ? getAuthorName(author) : 'Bilinmeyen Yazar'
 }
 
-/*
- * ID üzerinden kategori bulur.
- */
 const getCategoryName = (categoryId: string) => {
   const category = categories.value.find(
     item => item.id === categoryId
@@ -336,9 +359,6 @@ const getCategoryName = (categoryId: string) => {
   return category?.name ?? 'Bilinmeyen Kategori'
 }
 
-/*
- * ID üzerinden kütüphane bulur.
- */
 const getLibraryName = (libraryId: string) => {
   const library = memberLibraries.value.find(
     item => item.id === libraryId
@@ -347,19 +367,10 @@ const getLibraryName = (libraryId: string) => {
   return library?.name ?? 'Bilinmeyen Kütüphane'
 }
 
-/*
- * Kullanıcının üye olduğu kütüphanelerin ID'lerini getirir.
- */
 const getMemberLibraryIds = () => {
-  return userLibraries.value.map(
-    item => item.libraryId
-  )
+  return userLibraries.value.map(item => item.libraryId)
 }
 
-/*
- * Kitabın kullanıcının erişebildiği kütüphanelerdeki
- * kayıtlarını getirir. Seçili kütüphane filtresini de uygular.
- */
 const getLibraryBooks = (bookId: string) => {
   const memberLibraryIds = getMemberLibraryIds()
 
@@ -379,9 +390,6 @@ const getLibraryBooks = (bookId: string) => {
   })
 }
 
-/*
- * Kitabın erişilebilir kütüphanelerdeki toplam stokunu hesaplar.
- */
 const getTotalQuantity = (bookId: string) => {
   return getLibraryBooks(bookId).reduce(
     (total, libraryBook) => total + libraryBook.quantity,
@@ -389,12 +397,8 @@ const getTotalQuantity = (bookId: string) => {
   )
 }
 
-/*
- * Filtrelenmiş kitaplar.
- */
 const filteredBooks = computed(() => {
   return books.value.filter(book => {
-    // Kitap üye olunan kütüphanelerde bulunmalı.
     const memberLibraryBookExists =
       getLibraryBooks(book.id).length > 0
 
@@ -402,7 +406,6 @@ const filteredBooks = computed(() => {
       return false
     }
 
-    // Arama
     const author = getAuthorNameById(book.authorId)
     const search = searchQuery.value.toLowerCase().trim()
 
@@ -412,17 +415,14 @@ const filteredBooks = computed(() => {
       book.isbn.toLowerCase().includes(search) ||
       author.toLowerCase().includes(search)
 
-    // Kategori
     const matchesCategory =
       !selectedCategory.value ||
       book.categoryId === selectedCategory.value
 
-    // Yazar
     const matchesAuthor =
       !selectedAuthor.value ||
       book.authorId === selectedAuthor.value
 
-    // Stok
     const quantity = getTotalQuantity(book.id)
 
     const matchesStock =
@@ -442,9 +442,6 @@ const filteredBooks = computed(() => {
   })
 })
 
-/*
- * Kitapları ve ilişkili verileri yükler.
- */
 const loadBooks = async () => {
   try {
     loading.value = true
@@ -458,18 +455,18 @@ const loadBooks = async () => {
       return
     }
 
-    // Kullanıcının kütüphane üyelikleri
     const userLibraryData = await apiFetch<UserLibrary[]>(
-      `/api/UserLibrary/user/${userId}`
+      `/api/UserLibrary/user/${encodeURIComponent(userId)}`
     )
 
-    userLibraries.value = userLibraryData
+    userLibraries.value = Array.isArray(userLibraryData)
+      ? userLibraryData
+      : []
 
-    const memberLibraryIds = userLibraryData.map(
+    const memberLibraryIds = userLibraries.value.map(
       item => item.libraryId
     )
 
-    // İlişkili verileri yükle
     const [
       bookData,
       authorData,
@@ -484,22 +481,26 @@ const loadBooks = async () => {
       apiFetch<LibraryBook[]>('/api/LibraryBook')
     ])
 
-    // Yalnızca üye olunan kütüphaneleri göster
-    libraries.value = libraryData
+    libraries.value = Array.isArray(libraryData)
+      ? libraryData
+      : []
 
-    memberLibraries.value = libraryData.filter(
+    memberLibraries.value = libraries.value.filter(
       library => memberLibraryIds.includes(library.id)
     )
 
-    // LibraryBook kayıtlarını üyeliklerle sınırla
-    libraryBooks.value = libraryBookData.filter(
+    libraryBooks.value = (
+      Array.isArray(libraryBookData) ? libraryBookData : []
+    ).filter(
       libraryBook =>
         memberLibraryIds.includes(libraryBook.libraryId)
     )
 
-    books.value = bookData
-    authors.value = authorData
-    categories.value = categoryData
+    books.value = Array.isArray(bookData) ? bookData : []
+    authors.value = Array.isArray(authorData) ? authorData : []
+    categories.value = Array.isArray(categoryData)
+      ? categoryData
+      : []
   } catch (error) {
     console.error('Kitaplar yüklenirken hata oluştu:', error)
 
@@ -510,12 +511,6 @@ const loadBooks = async () => {
   }
 }
 
-/*
- * Kitap ödünç alma işlemi.
- *
- * Frontend tarih hesaplamaz.
- * Backend BorrowDate ve DueDate değerlerini belirler.
- */
 const borrowBook = async (
   book: Book,
   libraryBook: LibraryBook
@@ -540,12 +535,8 @@ const borrowBook = async (
     }
 
     borrowingLibraryBookId.value = libraryBook.id
-
-    // Önceki sonucu temizle
     delete borrowMessage.value[book.id]
 
-    // Yalnızca gerekli iki alanı gönder.
-    // BorrowDate ve DueDate backend tarafından hesaplanır.
     await apiFetch('/api/Loan', {
       method: 'POST',
       body: {
@@ -559,7 +550,6 @@ const borrowBook = async (
       text: `${getLibraryName(libraryBook.libraryId)} kütüphanesinden kitap başarıyla ödünç alındı.`
     }
 
-    // İşlem sonrası stokları güncelle
     await loadBooks()
   } catch (error: any) {
     console.error('Kitap ödünç alınırken hata oluştu:', error)
@@ -589,221 +579,340 @@ onMounted(() => {
 <style scoped>
 .books-page {
   min-height: 100vh;
-  position: relative;
-  background:
-    linear-gradient(
-      rgba(245, 237, 228, 0.54),
-      rgba(245, 237, 228, 0.54)
-    ),
-    url("https://images.openai.com/static-rsc-4/xmPoryFkHin-rERvYKXFtYqEp51cj5lktGQMde8rwf827nL6z_I1_s116c5p_YutXUa6rLGoNMGvD6qI60fgm80NaihvgqBPXCrZjNv9HKfA_yCiMIMVlH_Tpk0icUCuzYBZ7cGa7_InYzyQw6XEtfHCNhH-3h_U95yftfn5oGClbRZNklaO4kOnKP2GfZSg?purpose=fullsize");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  color: #3f2b20;
-  padding: 40px 24px 70px;
+  background: #f6f0e7;
+  padding: 32px 20px 60px;
+  color: #46372d;
 }
 
 .books-container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
-/* GERİ DÖN */
+/* Geri dönüş bağlantısı */
 .back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 28px;
-  padding: 7px 12px;
-  color: #4b3021;
-  background: rgba(255, 250, 244, 0.92);
-  border-radius: 7px;
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #785b46;
   text-decoration: none;
-  font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(92, 57, 34, 0.08);
-  transition: 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .back-link:hover {
-  background: #fffaf4;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 12px rgba(92, 57, 34, 0.12);
+  color: #4c3527;
 }
 
-/* SAYFA BAŞLIĞI */
+/* Ceza Ödemesi sayfasıyla uyumlu sayfa başlığı */
 .page-header {
-  margin-bottom: 26px;
-  background: rgba(255, 250, 244, 0.97);
-  border: 1px solid #dfc8b2;
-  border-radius: 20px;
-  padding: 32px 38px;
-  box-shadow: 0 12px 35px rgba(92, 57, 34, 0.12);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 30px 34px;
+  overflow: hidden;
+  background: linear-gradient(
+    120deg,
+    #fffdf9 0%,
+    #fcf5ed 48%,
+    #f9eee2 100%
+  );
+  border: 1px solid #e7d5c3;
+  border-radius: 18px;
+  box-shadow: 0 7px 22px rgba(90, 59, 36, 0.055);
+}
+
+.page-header::after {
+  position: absolute;
+  top: -65px;
+  right: -35px;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(169, 115, 72, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.page-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #a06a3e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
 }
 
 .page-header h1 {
-  display: inline-block;
-  margin: 0 0 12px;
-  padding: 5px 12px;
-  color: #4b3021;
-  background: rgba(255, 250, 244, 0.94);
-  border-radius: 7px;
+  margin: 0 0 10px;
+  color: #493122;
   font-size: 32px;
-  font-weight: 650;
-  letter-spacing: -0.5px;
-  box-shadow: 0 2px 8px rgba(92, 57, 34, 0.07);
+  font-weight: 750;
+  letter-spacing: -0.7px;
 }
 
-.page-header p {
-  max-width: 700px;
+.page-header p,
+.section-heading p {
   margin: 0;
-  color: #765b48;
-  font-size: 15px;
+  color: #816b58;
   line-height: 1.7;
 }
 
-/* FİLTRELER */
+.page-header p {
+  max-width: 680px;
+  font-size: 15px;
+}
+
+.header-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 15px;
+  font-size: 35px;
+}
+
+/* Bölüm başlıkları */
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 0 0 8px;
+  color: #493629;
+  font-size: 23px;
+}
+
+.filters-section {
+  margin-bottom: 36px;
+}
+
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(150px, 1fr));
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 28px;
-  padding: 18px;
-  background: rgba(255, 250, 244, 0.96);
-  border: 1px solid #dfc8b2;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(92, 57, 34, 0.10);
+  padding: 20px;
+  border: 1px solid #e5d7c8;
+  border-radius: 18px;
+  background: #fffdf9;
+  box-shadow: 0 5px 18px rgb(75 52 35 / 5%);
+}
+
+.search-box {
+  position: relative;
+  min-width: 0;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  transform: translateY(-52%);
+  color: #8b6b52;
+  font-size: 23px;
+  pointer-events: none;
 }
 
 .search-box input,
 .filters select {
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  padding: 12px 14px;
-  border: 1px solid #d8c0a8;
-  border-radius: 9px;
-  background: #fffaf4;
-  color: #4b3021;
-  font-size: 14px;
+  padding: 12px 13px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #594333;
+  font: inherit;
+  font-size: 13px;
   outline: none;
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+    box-shadow 0.2s ease;
+}
+
+.search-box input {
+  padding-left: 40px;
 }
 
 .search-box input::placeholder {
-  color: #9a806c;
+  color: #a08d7d;
 }
 
 .search-box input:focus,
 .filters select:focus {
-  border-color: #c9783f;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(201, 120, 63, 0.12);
+  border-color: #a4876d;
+  box-shadow: 0 0 0 3px rgb(120 88 63 / 10%);
 }
 
-/* KİTAPLAR */
+/* Sonuç sayısı */
+.results-heading {
+  margin-bottom: 20px;
+}
+
+.result-count {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #78583f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Kitap kartları */
 .books-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
+  align-items: stretch;
 }
 
 .book-card {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
-  background: rgba(255, 250, 244, 0.98);
-  border: 1px solid #dfc8b2;
+  border: 1px solid #e6d8c9;
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(92, 57, 34, 0.10);
+  background: #fffdf9;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 32px rgba(92, 57, 34, 0.16);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgb(75 52 35 / 9%);
 }
 
-/* KİTAP İÇERİĞİ */
 .book-content {
   display: block;
-  flex: 1;
-  padding: 20px;
+  padding: 20px 20px 18px;
   color: inherit;
   text-decoration: none;
 }
 
 .book-cover {
-  height: 170px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
-  background: linear-gradient(135deg, #ead7c3, #f4e7d8);
-  border: 1px solid #dfc8b2;
+  gap: 10px;
+  min-height: 160px;
+  margin-bottom: 20px;
+  border: 1px solid #e5d7c8;
   border-radius: 12px;
-  font-size: 55px;
-  box-shadow: inset 0 0 25px rgba(92, 57, 34, 0.05);
+  background: linear-gradient(135deg, #f2e6d8, #e8d6c3);
 }
 
-/* KİTAP BİLGİLERİ */
+.book-cover-icon {
+  font-size: 48px;
+  transition: transform 0.2s ease;
+}
+
+.book-card:hover .book-cover-icon {
+  transform: scale(1.06);
+}
+
+.cover-caption {
+  color: #92755c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
 .category-name {
-  color: #a85d2d;
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #8b6b52;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
 }
 
-.book-info h2 {
-  margin: 8px 0 6px;
-  color: #4b3021;
+.book-info h3 {
+  margin: 0 0 8px;
+  color: #493629;
   font-size: 21px;
-  line-height: 1.3;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .author-name {
   margin: 0 0 10px;
-  color: #765b48;
+  color: #766557;
   font-size: 14px;
 }
 
 .isbn {
-  margin: 0 0 14px;
-  color: #9a806c;
+  margin: 0 0 15px;
+  color: #998575;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
-/* STOK */
+/* Stok durumu */
 .stock-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.stock-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .stock-info.available,
 .library-stock.available {
-  color: #4f7a45;
+  color: #617c58;
 }
 
 .stock-info.unavailable,
 .library-stock.unavailable {
-  color: #a84d3d;
+  color: #a85e4d;
 }
 
-/* KÜTÜPHANELER */
+/* Kütüphane alanı */
 .libraries-section {
-  padding: 0 20px 20px;
+  margin-top: auto;
+  padding: 18px 20px 20px;
+  border-top: 1px solid #eee3d8;
 }
 
 .libraries-title {
-  margin-bottom: 10px;
-  color: #5c4030;
+  margin-bottom: 13px;
+  color: #594333;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .library-list {
@@ -814,127 +923,176 @@ onMounted(() => {
 
 .library-item {
   padding: 12px;
-  background: #fbf3ea;
-  border: 1px solid #e3ccb7;
+  border: 1px solid #e9ddd0;
   border-radius: 10px;
+  background: #faf5ee;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
 .library-item:hover {
-  background: #f8ecdf;
-  border-color: #d5b495;
+  border-color: #d8c3ae;
+  background: #f6eee4;
 }
 
 .library-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 9px;
+  gap: 6px;
+  margin-bottom: 11px;
 }
 
 .library-name {
-  color: #5c4030;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #594333;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.location-icon {
+  flex-shrink: 0;
+  color: #8b6b52;
+  font-size: 17px;
+  line-height: 1;
 }
 
 .library-stock {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .no-library-message {
-  padding: 10px;
-  background: #f8eee4;
-  border: 1px solid #e5d1be;
-  border-radius: 8px;
-  color: #806b5b;
+  padding: 12px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #f8f1e8;
+  color: #826b58;
   font-size: 12px;
+  line-height: 1.6;
   text-align: center;
 }
 
-/* ÖDÜNÇ BUTONU */
-.borrow-button {
-  width: 100%;
-  padding: 10px 14px;
+/* Butonlar */
+.borrow-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
   border: none;
-  border-radius: 8px;
-  background: #b96b35;
-  color: #fff;
+  border-radius: 10px;
+  background: #78583f;
+  color: #fffaf4;
+  font: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
+  transition: background 0.2s ease;
 }
 
-.borrow-button:hover:not(:disabled) {
-  background: #a95e2c;
-  transform: translateY(-1px);
+.borrow-button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.borrow-button:hover:not(:disabled),
+.secondary-button:hover {
+  background: #5d422f;
 }
 
 .borrow-button:disabled {
   cursor: not-allowed;
-  opacity: 0.65;
+  opacity: 0.7;
 }
 
 .borrow-button.disabled {
-  background: #a99b90;
+  background: #b9aa9b;
+  color: #fffdf9;
 }
 
-/* ÖDÜNÇ MESAJI */
+.secondary-button {
+  margin-top: 12px;
+}
+
+/* Ödünç alma mesajları */
 .borrow-message {
   margin: 0 20px 20px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 10px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .borrow-message.success {
-  background: #f0f6ec;
-  border: 1px solid #cbdcc4;
-  color: #46663e;
+  border: 1px solid #d2dfc9;
+  background: #f1f6ed;
+  color: #4e6945;
 }
 
 .borrow-message.error {
-  background: #fbefec;
-  border: 1px solid #e5c4bc;
-  color: #93493c;
+  border: 1px solid #e5c5bb;
+  background: #fff5f1;
+  color: #994d3b;
 }
 
-/* DURUM MESAJLARI */
-.state-message,
-.empty-message {
-  padding: 35px;
-  background: rgba(255, 250, 244, 0.97);
-  border: 1px solid #dfc8b2;
-  border-radius: 16px;
-  color: #806b5b;
+/* Genel durum kartları */
+.message-card {
+  margin: 18px 0;
+  padding: 28px;
+  border: 1px solid #e5d7c8;
+  border-radius: 18px;
+  background: #fffdf9;
+  color: #705844;
+  line-height: 1.7;
   text-align: center;
-  box-shadow: 0 8px 25px rgba(92, 57, 34, 0.09);
+  box-shadow: 0 5px 18px rgb(75 52 35 / 5%);
 }
 
-.state-message.error {
-  background: #fbefec;
-  border-color: #e5c4bc;
-  color: #93493c;
+.message-card h3 {
+  margin: 10px 0;
+  color: #493629;
+  font-size: 20px;
 }
 
-/* TABLET */
+.message-card p {
+  margin: 8px 0;
+}
+
+.empty-icon,
+.loading-icon {
+  font-size: 35px;
+}
+
+.error-message {
+  border-color: #dfb9ad;
+  background: #fff7f4;
+  color: #994d3b;
+  overflow-wrap: anywhere;
+}
+
+.error-message p {
+  margin-top: 0;
+}
+
+.empty-message {
+  padding: 38px 24px;
+}
+
+/* Tablet */
 @media (max-width: 1100px) {
   .filters {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
 
-/* TABLET / KÜÇÜK EKRAN */
-@media (max-width: 950px) {
-  .filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .search-box {
+    grid-column: span 2;
   }
 
   .books-grid {
@@ -942,18 +1100,34 @@ onMounted(() => {
   }
 }
 
-/* MOBİL */
-@media (max-width: 600px) {
+/* Mobil */
+@media (max-width: 650px) {
   .books-page {
-    padding: 30px 18px 50px;
+    padding: 24px 14px 40px;
   }
 
   .page-header {
-    padding: 26px 24px;
+    gap: 14px;
+    padding: 24px 20px;
   }
 
   .page-header h1 {
-    font-size: 28px;
+    font-size: 27px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 27px;
+  }
+
+  .section-heading h2 {
+    font-size: 21px;
   }
 
   .filters {
@@ -961,12 +1135,37 @@ onMounted(() => {
     padding: 15px;
   }
 
+  .search-box {
+    grid-column: auto;
+  }
+
   .books-grid {
     grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .book-content {
+    padding: 17px;
   }
 
   .book-cover {
-    height: 150px;
+    min-height: 140px;
+  }
+
+  .libraries-section {
+    padding: 16px 17px 18px;
+  }
+
+  .results-heading {
+    align-items: flex-start;
+  }
+
+  .result-count {
+    font-size: 12px;
+  }
+
+  .message-card {
+    padding: 22px 17px;
   }
 }
 </style>

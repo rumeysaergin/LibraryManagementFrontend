@@ -72,6 +72,17 @@
               <span>Profil Bilgilerim</span>
             </NuxtLink>
 
+            <!-- Yönetici ise Admin Paneli Bağlantısı -->
+            <NuxtLink
+              v-if="userRole === 'Admin'"
+              to="/admin"
+              class="profile-menu-item"
+              @click="closeProfileMenu"
+            >
+              <span>⚙️</span>
+              <span>Yönetim Paneli</span>
+            </NuxtLink>
+
 
             <!-- Çıkış Yap -->
             <button
@@ -117,6 +128,7 @@ const route = useRoute()
 ========================================================= */
 
 const isLoggedIn = ref(false)
+const userRole = ref<string | null>(null)
 
 
 /* =========================================================
@@ -136,6 +148,7 @@ const checkAuth = () => {
   }
 
   const token = localStorage.getItem('token')
+  userRole.value = localStorage.getItem('role')
 
   /*
    * Token varsa giriş yapılmış,
@@ -148,6 +161,7 @@ const checkAuth = () => {
    */
   if (!isLoggedIn.value) {
     profileMenuOpen.value = false
+    userRole.value = null
   }
 }
 
@@ -203,8 +217,11 @@ const logout = async () => {
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
     localStorage.removeItem('email')
+    localStorage.removeItem('role')
 
   }
+
+  userRole.value = null
 
   /*
    * Header'ı anında Giriş Yap durumuna getir.

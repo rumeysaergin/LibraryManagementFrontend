@@ -11,7 +11,7 @@
 
         <h1>
           Kütüphanenizi
-          <span>kolayca yönetin.</span>
+          <span>kolayca keşfedin ve yönetin.</span>
         </h1>
 
         <p class="description">

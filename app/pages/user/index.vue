@@ -1,106 +1,110 @@
 <template>
   <main class="user-page">
+    <div class="dashboard-container">
 
-    <section class="dashboard">
+      <!-- Hoş Geldin Başlığı -->
+      <header class="page-header">
+        <div class="header-content">
+          <span class="page-eyebrow">KULLANICI PANELİ</span>
 
-      <!-- Hoş Geldin -->
-      <div class="welcome-section">
+          <h1>Hoş geldin!</h1>
 
-        <div class="welcome-content">
-
-          <p class="subtitle">
-            KULLANICI PANELİ
+          <p>
+            Kütüphane işlemlerinizi buradan kolayca yönetebilir,
+            ödünç aldığınız kitapları takip edebilir ve üyelik
+            bilgilerinizi görüntüleyebilirsiniz.
           </p>
-
-          <h1>
-            Hoş geldin! 
-          </h1>
-
-          <p class="description">
-            Kütüphane işlemlerinizi buradan kolayca yönetebilirsiniz.
-          </p>
-
         </div>
 
-      </div>
-
+        <div class="header-icon" aria-hidden="true">
+          📚
+        </div>
+      </header>
 
       <!-- İstatistikler -->
-      <div class="stats-grid">
-
-        <!-- Kütüphanelerim -->
-        <div class="stat-card">
-
-          <div class="stat-icon">
-            📚
-          </div>
-
+      <section class="stats-section">
+        <div class="section-heading">
           <div>
-            <p class="stat-title">
-              Kütüphanelerim
-            </p>
-
-            <p class="stat-value">
-              {{ libraryCount }}
-            </p>
+            <h2>Genel Bakış</h2>
+            <p>Kütüphane işlemlerinizin güncel durumu.</p>
           </div>
-
         </div>
 
+        <div class="stats-grid">
 
-        <!-- Ödünçler -->
-        <div class="stat-card">
+          <!-- Kütüphanelerim -->
+          <NuxtLink
+            to="/user/libraries"
+            class="stat-card"
+          >
+            <div class="stat-icon">
+              🏛️
+            </div>
 
-          <div class="stat-icon">
-            📖
-          </div>
+            <div class="stat-content">
+              <p class="stat-title">Kütüphanelerim</p>
+              <p class="stat-value">{{ libraryCount }}</p>
+              <span class="stat-description">
+                Kayıtlı kütüphaneleriniz
+              </span>
+            </div>
 
-          <div>
-            <p class="stat-title">
-              Ödünç Aldıklarım
-            </p>
+            <span class="stat-arrow">→</span>
+          </NuxtLink>
 
-            <p class="stat-value">
-              {{ loanCount }}
-            </p>
-          </div>
+          <!-- Ödünç Aldıklarım -->
+          <NuxtLink
+            to="/user/loans"
+            class="stat-card"
+          >
+            <div class="stat-icon">
+              📖
+            </div>
+
+            <div class="stat-content">
+              <p class="stat-title">Ödünç Aldıklarım</p>
+              <p class="stat-value">{{ loanCount }}</p>
+              <span class="stat-description">
+                Henüz iade edilmemiş kitaplar
+              </span>
+            </div>
+
+            <span class="stat-arrow">→</span>
+          </NuxtLink>
+
+          <!-- Aktif Cezalarım -->
+          <NuxtLink
+            to="/user/fines"
+            class="stat-card"
+          >
+            <div class="stat-icon warning-icon">
+              ⚠️
+            </div>
+
+            <div class="stat-content">
+              <p class="stat-title">Aktif Cezalarım</p>
+              <p class="stat-value">{{ fineCount }}</p>
+              <span class="stat-description">
+                Ödenmemiş ceza kayıtlarınız
+              </span>
+            </div>
+
+            <span class="stat-arrow">→</span>
+          </NuxtLink>
 
         </div>
-
-
-        <!-- Cezalar -->
-        <div class="stat-card">
-
-          <div class="stat-icon">
-            ⚠️
-          </div>
-
-          <div>
-            <p class="stat-title">
-              Aktif Cezalarım
-            </p>
-
-            <p class="stat-value">
-              {{ fineCount }}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
+      </section>
 
       <!-- Kütüphane İşlemleri -->
       <section class="quick-section">
-
-        <div class="section-header">
-
-          <h2>
-            Kütüphane İşlemleri
-          </h2>
-
+        <div class="section-heading">
+          <div>
+            <h2>Kütüphane İşlemleri</h2>
+            <p>
+              Kitaplarınızı ve kütüphane işlemlerinizi tek yerden yönetin.
+            </p>
+          </div>
         </div>
-
 
         <div class="actions-grid">
 
@@ -109,124 +113,82 @@
             to="/user/libraries"
             class="action-card"
           >
+            <div class="action-icon">🏛️</div>
 
-            <div class="action-icon">
-              🏛️
-            </div>
-
-            <div>
-              <h3>
-                Kütüphanelerim
-              </h3>
-
+            <div class="action-content">
+              <h3>Kütüphanelerim</h3>
               <p>
-                Kayıtlı olduğunuz kütüphaneleri görüntüleyin.
+                Kayıtlı olduğunuz kütüphaneleri ve üyeliklerinizi görüntüleyin.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
-
 
           <!-- Kitaplar -->
           <NuxtLink
             to="/user/books"
             class="action-card"
           >
+            <div class="action-icon">📚</div>
 
-            <div class="action-icon">
-              📚
-            </div>
-
-            <div>
-              <h3>
-                Kitapları Keşfet
-              </h3>
-
+            <div class="action-content">
+              <h3>Kitapları Keşfet</h3>
               <p>
-                Kütüphanelerde bulunan kitapları inceleyin.
+                Üye olduğunuz kütüphanelerdeki kitapları inceleyin ve ödünç alın.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
-
 
           <!-- Ödünçler -->
           <NuxtLink
             to="/user/loans"
             class="action-card"
           >
+            <div class="action-icon">📖</div>
 
-            <div class="action-icon">
-              📖
-            </div>
-
-            <div>
-              <h3>
-                Ödünç İşlemlerim
-              </h3>
-
+            <div class="action-content">
+              <h3>Ödünç İşlemlerim</h3>
               <p>
-                Ödünç aldığınız kitapları ve teslim tarihlerini takip edin.
+                Ödünç aldığınız kitapları ve son teslim tarihlerini takip edin.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
-
 
           <!-- Cezalar -->
           <NuxtLink
             to="/user/fines"
             class="action-card"
           >
+            <div class="action-icon warning-icon">⚠️</div>
 
-            <div class="action-icon">
-              ⚠️
-            </div>
-
-            <div>
-              <h3>
-                Cezalarım
-              </h3>
-
+            <div class="action-content">
+              <h3>Cezalarım</h3>
               <p>
-                Aktif ve geçmiş cezalarınızı görüntüleyin.
+                Aktif ve geçmiş ceza kayıtlarınızı görüntüleyin.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
 
         </div>
-
       </section>
-
 
       <!-- Üyelik ve Ödeme -->
       <section class="quick-section membership-section">
-
-        <div class="section-header">
-
-          <h2>
-            Üyelik ve Ödeme
-          </h2>
-
+        <div class="section-heading">
+          <div>
+            <h2>Üyelik ve Ödeme</h2>
+            <p>
+              Üyelik planlarınızı ve ödeme kayıtlarınızı yönetin.
+            </p>
+          </div>
         </div>
-
 
         <div class="actions-grid">
 
@@ -235,72 +197,48 @@
             to="/user/membership"
             class="action-card"
           >
+            <div class="action-icon">👤</div>
 
-            <div class="action-icon">
-              👤
-            </div>
-
-            <div>
-              <h3>
-                Üyeliklerim
-              </h3>
-
+            <div class="action-content">
+              <h3>Üyeliklerim</h3>
               <p>
                 Mevcut üyeliğinizi görüntüleyin ve diğer üyelik planlarını inceleyin.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
-
 
           <!-- Ödemelerim -->
           <NuxtLink
             to="/user/payments"
             class="action-card"
           >
+            <div class="action-icon">💳</div>
 
-            <div class="action-icon">
-              💳
-            </div>
-
-            <div>
-              <h3>
-                Ödemelerim
-              </h3>
-
+            <div class="action-content">
+              <h3>Ödemelerim</h3>
               <p>
-                Üyelik planı ödemelerinizi gerçekleştirin ve ödeme geçmişinizi görüntüleyin.
+                Üyelik ödemelerinizi ve ödeme geçmişinizi görüntüleyin.
               </p>
             </div>
 
-            <span class="arrow">
-              →
-            </span>
-
+            <span class="arrow">→</span>
           </NuxtLink>
 
         </div>
-
       </section>
 
-    </section>
-
+    </div>
   </main>
 </template>
 
-
 <script setup lang="ts">
-
 interface UserLibrary {
   id: string
   userId: string
   libraryId: string
 }
-
 
 interface Loan {
   id: string
@@ -312,7 +250,6 @@ interface Loan {
   status: string
 }
 
-
 interface Fine {
   id: string
   loanId: string
@@ -321,448 +258,329 @@ interface Fine {
   isPaid: boolean
 }
 
-
 const { apiFetch } = useApi()
 
-
 const libraryCount = ref(0)
-
 const loanCount = ref(0)
-
 const fineCount = ref(0)
 
-
 const loadDashboardData = async () => {
-
   try {
-
     const userId = localStorage.getItem('userId')
 
-
     if (!userId) {
-
-      console.error(
-        'Kullanıcı ID bulunamadı.'
-      )
-
+      console.error('Kullanıcı ID bulunamadı.')
       return
     }
 
-
-    // =========================
-    // Kütüphanelerim
-    // =========================
-
-    const userLibraries =
-      await apiFetch<UserLibrary[]>(
-        `/api/UserLibrary/user/${userId}`
-      )
-
-
-    libraryCount.value =
-      userLibraries.length
-
-
-    console.log(
-      'Kullanıcının kütüphaneleri:',
-      userLibraries
+    // Kullanıcının kayıtlı olduğu kütüphaneler
+    const userLibraries = await apiFetch<UserLibrary[]>(
+      `/api/UserLibrary/user/${encodeURIComponent(userId)}`
     )
 
+    libraryCount.value = Array.isArray(userLibraries)
+      ? userLibraries.length
+      : 0
 
-    console.log(
-      'Kütüphane sayısı:',
-      libraryCount.value
+    // Kullanıcının ödünç kayıtları
+    const userLoans = await apiFetch<Loan[]>(
+      `/api/Loan/user/${encodeURIComponent(userId)}`
     )
 
+    const safeLoans = Array.isArray(userLoans)
+      ? userLoans
+      : []
 
-    // =========================
-    // Ödünçler
-    // =========================
-
-    const userLoans =
-      await apiFetch<Loan[]>(
-        `/api/Loan/user/${userId}`
-      )
-
-
-    // Sadece henüz iade edilmemiş kitaplar
-    const activeLoans =
-      userLoans.filter(
-        loan => loan.returnDate === null
-      )
-
-
-    loanCount.value =
-      activeLoans.length
-
-
-    console.log(
-      'Kullanıcının tüm ödünç kayıtları:',
-      userLoans
+    // Yalnızca iade edilmemiş kitaplar
+    const activeLoans = safeLoans.filter(
+      loan => loan.returnDate == null
     )
 
+    loanCount.value = activeLoans.length
 
-    console.log(
-      'Aktif ödünç kayıtları:',
-      activeLoans
+    // Her ödünç kaydının cezalarını getir
+    const fineRequests = safeLoans.map(async (loan) => {
+      try {
+        const fines = await apiFetch<Fine[]>(
+          `/api/Fine/loan/${encodeURIComponent(loan.id)}`
+        )
+
+        return Array.isArray(fines) ? fines : []
+      } catch (error) {
+        console.error(
+          `Loan ${loan.id} için ceza alınırken hata oluştu:`,
+          error
+        )
+
+        return []
+      }
+    })
+
+    const fineResults = await Promise.all(fineRequests)
+    const allFines = fineResults.flat()
+
+    // Yalnızca ödenmemiş cezalar
+    const activeFines = allFines.filter(
+      fine => !fine.isPaid
     )
 
+    fineCount.value = activeFines.length
 
-    console.log(
-      'Aktif ödünç sayısı:',
-      loanCount.value
-    )
-
-
-    // =========================
-    // Cezalar
-    // =========================
-
-    const fineRequests =
-      userLoans.map(async (loan) => {
-
-        try {
-
-          const fines =
-            await apiFetch<Fine[]>(
-              `/api/Fine/loan/${loan.id}`
-            )
-
-          return fines
-
-        }
-        catch (error) {
-
-          console.error(
-            `Loan ${loan.id} için ceza alınırken hata oluştu:`,
-            error
-          )
-
-          return []
-
-        }
-
-      })
-
-
-    const fineResults =
-      await Promise.all(fineRequests)
-
-
-    const allFines =
-      fineResults.flat()
-
-
-    // Sadece ödenmemiş cezalar
-    const activeFines =
-      allFines.filter(
-        fine => !fine.isPaid
-      )
-
-
-    fineCount.value =
-      activeFines.length
-
-
-    console.log(
-      'Kullanıcının tüm cezaları:',
-      allFines
-    )
-
-
-    console.log(
-      'Aktif cezalar:',
-      activeFines
-    )
-
-
-    console.log(
-      'Aktif ceza sayısı:',
-      fineCount.value
-    )
-
-  }
-  catch (error) {
-
+    console.log('Kullanıcı paneli verileri:', {
+      libraryCount: libraryCount.value,
+      loanCount: loanCount.value,
+      fineCount: fineCount.value
+    })
+  } catch (error) {
     console.error(
       'Dashboard verileri alınırken hata oluştu:',
       error
     )
-
   }
-
 }
-
 
 onMounted(() => {
-
   loadDashboardData()
-
 })
-
 </script>
 
-
 <style scoped>
-
 .user-page {
   min-height: 100vh;
-
-  padding: 45px 24px 70px;
-
   box-sizing: border-box;
-
-  background:
-    linear-gradient(
-      rgba(245, 237, 228, 0.54),
-      rgba(245, 237, 228, 0.54)
-    ),
-    url("https://images.openai.com/static-rsc-4/xmPoryFkHin-rERvYKXFtYqEp51cj5lktGQMde8rwf827nL6z_I1_s116c5p_YutXUa6rLGoNMGvD6qI60fgm80NaihvgqBPXCrZjNv9HKfA_yCiMIMVlH_Tpk0icUCuzYBZ7cGa7_InYzyQw6XEtfHCNhH-3h_U95yftfn5oGClbRZNklaO4kOnKP2GfZSg?purpose=fullsize");
-
-  background-size: cover;
-
-  background-position: center;
-
-  background-attachment: fixed;
-
-  color: #3f2b20;
+  padding: 32px 20px 60px;
+  background: #f6f0e7;
+  color: #46372d;
 }
 
-
-.dashboard {
-  max-width: 1200px;
-
+.dashboard-container {
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
-
-/* =========================
-   Hoş Geldin
-========================= */
-
-.welcome-section {
-  width: 100%;
-
-  margin-bottom: 38px;
+/* Sayfa başlığı */
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+  padding: 30px 34px;
+  overflow: hidden;
+  background: linear-gradient(
+    120deg,
+    #fffdf9 0%,
+    #fcf5ed 48%,
+    #f9eee2 100%
+  );
+  border: 1px solid #e7d5c3;
+  border-radius: 18px;
+  box-shadow: 0 7px 22px rgba(90, 59, 36, 0.055);
 }
 
-.welcome-content {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 20px 24px;
-
-  background: rgba(255, 250, 244, 0.95);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 14px;
-
-  box-shadow:
-    0 6px 18px rgba(92, 57, 34, 0.08);
+.page-header::after {
+  position: absolute;
+  top: -65px;
+  right: -35px;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(169, 115, 72, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
 }
 
-.subtitle {
-  color: #7c4b2c;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
-  letter-spacing: 1px;
-
-  margin: 0 0 7px;
+.header-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
 }
 
-.welcome-section h1 {
-  color: #4b3021;
-
-  font-size: 36px;
-
-  font-weight: 650;
-
-  margin: 0 0 8px;
+.page-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #a06a3e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
 }
 
-.description {
-  color: #765b48;
+.page-header h1 {
+  margin: 0 0 10px;
+  color: #493122;
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+}
 
-  font-size: 15px;
-
-  line-height: 1.5;
-
+.page-header p {
+  max-width: 680px;
   margin: 0;
+  color: #816b58;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
+.header-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 15px;
+  font-size: 35px;
+}
 
-/* =========================
-   İstatistikler
-========================= */
+/* Bölüm başlıkları */
+.stats-section,
+.quick-section {
+  margin-bottom: 36px;
+}
 
+.membership-section {
+  margin-bottom: 0;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 0 0 8px;
+  color: #493629;
+  font-size: 23px;
+  font-weight: 750;
+}
+
+.section-heading p {
+  margin: 0;
+  color: #816b58;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* İstatistik kartları */
 .stats-grid {
   display: grid;
-
-  grid-template-columns: repeat(3, 1fr);
-
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
-
-  margin-bottom: 48px;
 }
 
 .stat-card {
+  position: relative;
   display: flex;
-
   align-items: center;
-
-  gap: 17px;
-
+  gap: 16px;
+  min-width: 0;
   padding: 22px;
-
-  background: rgba(255, 250, 244, 0.96);
-
-  border: 1px solid #dfc8b2;
-
+  border: 1px solid #e6d8c9;
   border-radius: 16px;
-
-  box-shadow:
-    0 8px 22px rgba(92, 57, 34, 0.08);
-
+  background: #fffdf9;
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
   transition:
     transform 0.2s ease,
+    border-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  border-color: #d8c3ae;
+  box-shadow: 0 10px 25px rgb(75 52 35 / 9%);
+}
 
-  box-shadow:
-    0 11px 26px rgba(92, 57, 34, 0.11);
+.stat-icon,
+.action-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
 }
 
 .stat-icon {
-  width: 52px;
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+  font-size: 25px;
+}
 
-  height: 52px;
+.warning-icon {
+  background: #f7e8db;
+  border-color: #ead1bd;
+}
 
-  flex-shrink: 0;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  background: #f5e6d5;
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 12px;
-
-  font-size: 24px;
+.stat-content {
+  min-width: 0;
 }
 
 .stat-title {
-  color: #765b48;
-
-  font-size: 13px;
-
   margin: 0 0 5px;
+  color: #816b58;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .stat-value {
-  color: #4b3021;
-
-  font-size: 28px;
-
-  font-weight: 700;
-
-  margin: 0;
+  margin: 0 0 5px;
+  color: #493629;
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
-
-/* =========================
-   Bölümler
-========================= */
-
-.quick-section {
-  width: 100%;
-
-  margin-top: 10px;
-
-  margin-bottom: 52px;
+.stat-description {
+  display: block;
+  color: #998575;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
-.membership-section {
-  margin-bottom: 10px;
+.stat-arrow {
+  margin-left: auto;
+  color: #a06a3e;
+  font-size: 21px;
+  transition: transform 0.2s ease;
 }
 
-.section-header {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  margin-bottom: 20px;
-
-  padding: 16px 20px;
-
-  background: rgba(255, 250, 244, 0.95);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 14px;
-
-  box-shadow:
-    0 6px 18px rgba(92, 57, 34, 0.08);
+.stat-card:hover .stat-arrow {
+  transform: translateX(3px);
 }
 
-.section-header h2 {
-  color: #4b3021;
-
-  font-size: 25px;
-
-  font-weight: 650;
-
-  margin: 0;
-}
-
-
-/* =========================
-   İşlem Kartları
-========================= */
-
+/* İşlem kartları */
 .actions-grid {
   display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
 .action-card {
   position: relative;
-
   display: flex;
-
   align-items: center;
-
-  gap: 18px;
-
+  gap: 17px;
   min-width: 0;
-
   padding: 22px;
-
-  background: rgba(255, 250, 244, 0.96);
-
-  border: 1px solid #dfc8b2;
-
+  border: 1px solid #e6d8c9;
   border-radius: 16px;
-
+  background: #fffdf9;
+  color: inherit;
   text-decoration: none;
-
-  box-shadow:
-    0 8px 22px rgba(92, 57, 34, 0.07);
-
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -770,141 +588,162 @@ onMounted(() => {
 }
 
 .action-card:hover {
-  border-color: #cdb197;
-
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 11px 26px rgba(92, 57, 34, 0.12);
+  transform: translateY(-3px);
+  border-color: #d8c3ae;
+  box-shadow: 0 10px 25px rgb(75 52 35 / 9%);
 }
 
 .action-icon {
-  width: 48px;
-
-  height: 48px;
-
-  flex-shrink: 0;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  background: #f5e6d5;
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 11px;
-
-  font-size: 22px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 23px;
 }
 
-.action-card h3 {
-  color: #4b3021;
+.action-content {
+  min-width: 0;
+  padding-right: 18px;
+}
 
+.action-content h3 {
+  margin: 0 0 7px;
+  color: #493629;
   font-size: 16px;
-
-  font-weight: 650;
-
-  margin: 0 0 5px;
+  font-weight: 750;
+  line-height: 1.4;
 }
 
-.action-card p {
-  color: #765b48;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-
+.action-content p {
   margin: 0;
-
-  padding-right: 25px;
+  color: #816b58;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .arrow {
   position: absolute;
-
-  right: 20px;
-
-  color: #b96b35;
-
-  font-size: 20px;
-
-  transition:
-    transform 0.2s ease;
+  top: 50%;
+  right: 19px;
+  transform: translateY(-50%);
+  color: #a06a3e;
+  font-size: 21px;
+  transition: transform 0.2s ease;
 }
 
 .action-card:hover .arrow {
-  transform: translateX(3px);
+  transform: translate(3px, -50%);
 }
 
+/* Klavye ile erişilebilirlik */
+.stat-card:focus-visible,
+.action-card:focus-visible {
+  outline: 3px solid #b68a66;
+  outline-offset: 3px;
+}
 
-/* =========================
-   Mobil
-========================= */
-
-@media (max-width: 768px) {
-
-  .user-page {
-    padding: 35px 18px 55px;
-  }
-
+/* Tablet */
+@media (max-width: 900px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
+  .stat-card {
+    padding: 19px 21px;
+  }
+
   .actions-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .welcome-content {
-    width: 100%;
-  }
-
-  .welcome-section h1 {
-    font-size: 30px;
-  }
-
-  .section-header {
-    padding: 14px 17px;
-  }
-
-  .section-header h2 {
-    font-size: 22px;
-  }
-
 }
 
-
-@media (max-width: 480px) {
-
+/* Mobil */
+@media (max-width: 650px) {
   .user-page {
-    padding: 28px 14px 45px;
+    padding: 24px 14px 40px;
   }
 
-  .welcome-section h1 {
-    font-size: 26px;
+  .page-header {
+    gap: 14px;
+    padding: 24px 20px;
   }
 
-  .description {
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .page-header p {
     font-size: 14px;
   }
 
-  .stat-card {
-    padding: 18px;
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 27px;
+  }
+
+  .section-heading h2 {
+    font-size: 21px;
+  }
+
+  .section-heading p {
+    font-size: 13px;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .action-card {
     padding: 18px;
-
     gap: 14px;
   }
 
-  .action-card p {
-    font-size: 12px;
+  .action-content h3 {
+    font-size: 15px;
   }
 
+  .action-content p {
+    font-size: 12px;
+  }
 }
 
+@media (max-width: 380px) {
+  .page-header {
+    padding: 20px 16px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .header-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 23px;
+  }
+
+  .stat-card {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .stat-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 21px;
+  }
+
+  .stat-value {
+    font-size: 25px;
+  }
+
+  .action-icon {
+    width: 43px;
+    height: 43px;
+    font-size: 20px;
+  }
+}
 </style>

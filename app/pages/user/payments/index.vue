@@ -1,1173 +1,982 @@
+
 <template>
   <main class="payments-page">
-
     <section class="payments-container">
-
-      <!-- Geri Dön -->
-      <NuxtLink
-        to="/user"
-        class="back-link"
-      >
+      <NuxtLink to="/user" class="back-link">
         ← Kullanıcı Paneline Dön
       </NuxtLink>
 
-
-      <!-- Sayfa Başlığı -->
       <div class="page-header">
-
-        <p class="subtitle">
-          ÖDEME
-        </p>
-
-     
-
+        <p class="subtitle">ÖDEME</p>
+        <h1>Üyelik ve Ödeme İşlemleri</h1>
         <p class="description">
-          Üyelik planı ödemelerinizi gerçekleştirebilir ve geçmiş ödemelerinizi görüntüleyebilirsiniz.
+          Üyelik planınızı seçebilir, ödeme talebinizi oluşturabilir
+          ve ödeme geçmişinizi görüntüleyebilirsiniz.
         </p>
-
       </div>
 
-
-      <!-- Ödeme Yap -->
+      <!-- Üyelik planı seçimi -->
       <section class="payment-section">
-
         <div class="section-header">
-
-          <div class="section-title-group">
-
-            <p class="section-label">
-              ÜYELİK ÖDEMESİ
-            </p>
-
-            <h2>
-              Üyelik planı satın al
-            </h2>
-
-            <span class="section-description">
-              Seçtiğiniz üyelik planının ödemesini güvenli şekilde gerçekleştirin.
-            </span>
-
-          </div>
-
+          <p class="section-label">ÜYELİK ÖDEMESİ</p>
+          <h2>Üyelik planı seç</h2>
+          <p class="section-description">
+            Plan bilgileri veritabanından alınır. Ödeme tutarı sunucu
+            tarafından belirlenir.
+          </p>
         </div>
 
+        <div v-if="plansLoading" class="message-card">
+          Üyelik planları yükleniyor...
+        </div>
 
-        <div class="payment-card">
+        <div v-else-if="plansError" class="message-card error-card">
+          <p>{{ plansError }}</p>
+          <button
+            type="button"
+            class="secondary-button"
+            @click="loadPageData"
+          >
+            Tekrar Dene
+          </button>
+        </div>
 
-          <!-- Seçilen Plan -->
-          <div class="selected-plan">
+        <div v-else-if="plans.length === 0" class="message-card">
+          Henüz görüntülenebilecek bir üyelik planı bulunmuyor.
+        </div>
 
-            <div class="plan-icon">
-              👤
-            </div>
+        <div v-else class="payment-card">
+          <div class="form-group">
+            <label for="membership-plan">Üyelik planı</label>
 
-            <div class="selected-plan-info">
+            <select
+              id="membership-plan"
+              v-model="selectedPlanId"
+            >
+              <option value="" disabled>
+                Bir üyelik planı seçin
+              </option>
 
-              <p class="plan-label">
-                SEÇİLEN PLAN
-              </p>
-
-              <h3>
-                Premium Üyelik
-              </h3>
-
-              <p class="plan-description">
-                10 kitap ödünç alma hakkı · 30 gün
-              </p>
-
-            </div>
-
+              <option
+                v-for="plan in plans"
+                :key="plan.id"
+                :value="plan.id"
+              >
+                {{ plan.name }} — {{ formatPrice(plan.price) }}
+              </option>
+            </select>
           </div>
 
+          <div v-if="selectedPlan" class="selected-plan">
+            <div class="plan-icon">📚</div>
 
-          <!-- Ödeme Özeti -->
-          <div class="payment-summary">
+            <div class="selected-plan-info">
+              <p class="plan-label">SEÇİLEN PLAN</p>
+              <h3>{{ selectedPlan.name }}</h3>
+              <p class="plan-description">
+                {{ selectedPlan.maxBorrowLimit }} kitap ödünç alma limiti
+                · {{ selectedPlan.durationInDays }} gün
+              </p>
+            </div>
+          </div>
 
+          <div v-if="selectedPlan" class="payment-summary">
             <div class="summary-row">
-
-              <span>
-                Üyelik Ücreti
-              </span>
-
-              <strong>
-                100₺
-              </strong>
-
+              <span>Üyelik planı</span>
+              <strong>{{ selectedPlan.name }}</strong>
             </div>
 
             <div class="summary-row">
+              <span>Ödünç alma limiti</span>
+              <strong>{{ selectedPlan.maxBorrowLimit }} kitap</strong>
+            </div>
 
-              <span>
-                Süre
-              </span>
-
-              <strong>
-                30 gün
-              </strong>
-
+            <div class="summary-row">
+              <span>Üyelik süresi</span>
+              <strong>{{ selectedPlan.durationInDays }} gün</strong>
             </div>
 
             <div class="summary-row total">
-
-              <span>
-                Toplam
-              </span>
-
-              <strong>
-                100₺
-              </strong>
-
+              <span>Toplam tutar</span>
+              <strong>{{ formatPrice(selectedPlan.price) }}</strong>
             </div>
-
           </div>
 
-
-          <!-- Kart Formu -->
           <div class="payment-form">
-
             <div class="form-group">
+              <label for="payment-method">Ödeme yöntemi</label>
 
-              <label for="card-number">
-                Kart Numarası
-              </label>
-
-              <input
-                id="card-number"
-                type="text"
-                placeholder="0000 0000 0000 0000"
-              />
-
+              <select
+                id="payment-method"
+                v-model="paymentMethod"
+              >
+                <option value="CreditCard">Kredi kartı</option>
+                <option value="BankTransfer">Banka havalesi</option>
+                <option value="Cash">Nakit ödeme</option>
+              </select>
             </div>
 
-
-            <div class="form-row">
-
-              <div class="form-group">
-
-                <label for="card-name">
-                  Kart Üzerindeki İsim
-                </label>
-
-                <input
-                  id="card-name"
-                  type="text"
-                  placeholder="Ad Soyad"
-                />
-
+            <div class="info-box payment-notice">
+              <div class="info-icon">ℹ️</div>
+              <div>
+                <strong>Önemli bilgi</strong>
+                <p>
+                  Bu işlem bir ödeme talebi oluşturur; kartınızdan para
+                  çekilmez. Talebiniz yönetici onayına gönderilir.
+                  Üyeliğiniz, ödeme yönetici tarafından onaylandığında
+                  aktif olur. Gerçek para tahsilatı için ayrıca bir
+                  ödeme sağlayıcısı entegrasyonu gerekir.
+                </p>
               </div>
-
-
-              <div class="form-group">
-
-                <label for="expiry">
-                  Son Kullanma
-                </label>
-
-                <input
-                  id="expiry"
-                  type="text"
-                  placeholder="AA/YY"
-                />
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="cvv">
-                  CVV
-                </label>
-
-                <input
-                  id="cvv"
-                  type="text"
-                  placeholder="123"
-                />
-
-              </div>
-
             </div>
 
+            <p v-if="submitError" class="feedback error-feedback">
+              {{ submitError }}
+            </p>
+
+            <p v-if="submitSuccess" class="feedback success-feedback">
+              {{ submitSuccess }}
+            </p>
 
             <button
               type="button"
               class="payment-button"
+              :disabled="submitting || !selectedPlan"
+              @click="createPaymentRequest"
             >
-              💳 100₺ Ödeme Yap
+              {{
+                submitting
+                  ? 'Talep oluşturuluyor...'
+                  : selectedPlan
+                    ? `${formatPrice(selectedPlan.price)} Ödeme Talebi Oluştur`
+                    : 'Önce bir plan seçin'
+              }}
             </button>
-
           </div>
-
         </div>
-
       </section>
 
-
-      <!-- Ödeme Geçmişi -->
+      <!-- Ödeme geçmişi -->
       <section class="history-section">
-
         <div class="section-header">
-
-          <div class="section-title-group">
-
-            <p class="section-label">
-              GEÇMİŞ ÖDEMELER
-            </p>
-
-            <h2>
-              Ödeme geçmişim
-            </h2>
-
-            <span class="section-description">
-              Daha önce gerçekleştirdiğiniz üyelik ödemeleri.
-            </span>
-
-          </div>
-
+          <p class="section-label">GEÇMİŞ ÖDEMELER</p>
+          <h2>Ödeme geçmişim</h2>
+          <p class="section-description">
+            Oluşturduğunuz ödeme taleplerinin durumunu buradan takip edebilirsiniz.
+          </p>
         </div>
 
+        <div v-if="historyLoading" class="message-card">
+          Ödeme geçmişiniz yükleniyor...
+        </div>
 
-        <div class="history-card">
+        <div v-else-if="historyError" class="message-card error-card">
+          <p>{{ historyError }}</p>
+          <button
+            type="button"
+            class="secondary-button"
+            @click="loadPaymentHistory"
+          >
+            Tekrar Dene
+          </button>
+        </div>
 
-          <!-- Tablo Başlığı -->
+        <div v-else-if="paymentHistory.length === 0" class="message-card">
+          Henüz bir ödeme talebiniz bulunmuyor.
+        </div>
+
+        <div v-else class="history-card">
           <div class="history-header">
-
-            <span>
-              Üyelik Planı
-            </span>
-
-            <span>
-              Tarih
-            </span>
-
-            <span>
-              Tutar
-            </span>
-
-            <span>
-              Durum
-            </span>
-
+            <span>Üyelik Planı</span>
+            <span>Tarih</span>
+            <span>Tutar</span>
+            <span>Durum</span>
           </div>
 
-
-          <!-- Ödeme -->
-          <div class="history-row">
-
-            <div class="mobile-label">
-
-              <span>
-                Üyelik Planı
-              </span>
-
-              <strong>
-                Premium
-              </strong>
-
+          <div
+            v-for="payment in paymentHistory"
+            :key="payment.id"
+            class="history-row"
+          >
+            <div class="history-plan">
+              <span class="mobile-label">Üyelik Planı</span>
+              <strong>{{ getPaymentPlanName(payment) }}</strong>
             </div>
 
-            <strong>
-              Premium
-            </strong>
-
-            <span>
-              15.09.2026
-            </span>
-
-            <strong>
-              100₺
-            </strong>
-
-            <span class="status-success">
-              Başarılı
-            </span>
-
-          </div>
-
-
-          <!-- Ödeme -->
-          <div class="history-row">
-
-            <div class="mobile-label">
-
-              <span>
-                Üyelik Planı
-              </span>
-
-              <strong>
-                Basic
-              </strong>
-
+            <div>
+              <span class="mobile-label">Tarih</span>
+              <span>{{ formatDate(payment.paymentDate) }}</span>
             </div>
 
-            <strong>
-              Basic
-            </strong>
+            <div>
+              <span class="mobile-label">Tutar</span>
+              <strong>{{ formatPrice(payment.amount) }}</strong>
+            </div>
 
-            <span>
-              10.08.2026
-            </span>
-
-            <strong>
-              50₺
-            </strong>
-
-            <span class="status-success">
-              Başarılı
-            </span>
-
+            <div>
+              <span class="mobile-label">Durum</span>
+              <span
+                class="status-badge"
+                :class="payment.isPaid ? 'status-success' : 'status-pending'"
+              >
+                {{ payment.isPaid ? 'Onaylandı' : 'Beklemede' }}
+              </span>
+            </div>
           </div>
-
         </div>
-
       </section>
 
-
-      <!-- Bilgilendirme -->
-      <div class="info-box">
-
-        <div class="info-icon">
-          ℹ️
-        </div>
-
+      <div class="info-box bottom-info">
+        <div class="info-icon">ℹ️</div>
         <div>
-
-          <strong>
-            Ödeme hakkında
-          </strong>
-
+          <strong>Ödeme durumu hakkında</strong>
           <p>
-            Üyelik ödemeniz tamamlandığında seçtiğiniz plan hesabınız için aktif hale gelir.
+            Bekleyen taleplerde üyelik aktif değildir. Yönetici onayı
+            sonrasında üyelik süresi başlar ve üyelik durumunuz güncellenir.
           </p>
-
         </div>
-
       </div>
-
     </section>
-
   </main>
 </template>
 
+<script setup lang="ts">
+interface MembershipPlan {
+  id: string
+  name: string
+  maxBorrowLimit: number
+  price: number
+  durationInDays: number
+}
+
+interface UserMembership {
+  id: string
+  userId: string
+  membershipPlanId: string
+  startDate: string
+  endDate: string
+  isActive: boolean
+}
+
+interface MembershipPayment {
+  id: string
+  userMembershipId: string
+  amount: number
+  paymentDate: string
+  paymentMethod: string
+  isPaid: boolean
+}
+
+const route = useRoute()
+const { apiFetch } = useApi()
+
+const plans = ref<MembershipPlan[]>([])
+const memberships = ref<UserMembership[]>([])
+const paymentHistory = ref<MembershipPayment[]>([])
+
+const selectedPlanId = ref('')
+const paymentMethod = ref('CreditCard')
+
+const plansLoading = ref(true)
+const historyLoading = ref(true)
+const submitting = ref(false)
+
+const plansError = ref('')
+const historyError = ref('')
+const submitError = ref('')
+const submitSuccess = ref('')
+
+const selectedPlan = computed(() =>
+  plans.value.find(plan => plan.id === selectedPlanId.value) ?? null
+)
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    maximumFractionDigits: 2
+  }).format(price)
+
+const formatDate = (value: string) => {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return '—'
+  }
+
+  return new Intl.DateTimeFormat('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date)
+}
+
+const getPaymentPlanName = (payment: MembershipPayment) => {
+  const membership = memberships.value.find(
+    item => item.id === payment.userMembershipId
+  )
+
+  if (!membership) {
+    return 'Üyelik planı'
+  }
+
+  return plans.value.find(
+    plan => plan.id === membership.membershipPlanId
+  )?.name ?? 'Üyelik planı'
+}
+
+const loadPlans = async () => {
+  plansLoading.value = true
+  plansError.value = ''
+
+  try {
+    const result = await apiFetch<MembershipPlan[]>(
+      '/api/MembershipPlan'
+    )
+
+    plans.value = result ?? []
+
+    const queryPlanId = route.query.membershipPlanId
+    const requestedPlanId = Array.isArray(queryPlanId)
+      ? queryPlanId[0]
+      : queryPlanId
+
+    if (
+      requestedPlanId &&
+      plans.value.some(plan => plan.id === requestedPlanId)
+    ) {
+      selectedPlanId.value = requestedPlanId
+    } else if (
+      !selectedPlanId.value ||
+      !plans.value.some(plan => plan.id === selectedPlanId.value)
+    ) {
+      selectedPlanId.value = ''
+    }
+  } catch (error) {
+    console.error('Üyelik planları alınamadı:', error)
+    plansError.value = 'Üyelik planları sunucudan alınamadı.'
+  } finally {
+    plansLoading.value = false
+  }
+}
+
+const loadPaymentHistory = async () => {
+  historyLoading.value = true
+  historyError.value = ''
+
+  try {
+    const userId = import.meta.client
+      ? localStorage.getItem('userId')
+      : null
+
+    if (!userId) {
+      throw new Error(
+        'Kullanıcı bilgisi bulunamadı. Lütfen yeniden giriş yapın.'
+      )
+    }
+
+    const [membershipResult, paymentResult] = await Promise.all([
+      apiFetch<UserMembership[]>(
+        `/api/UserMembership/user/${encodeURIComponent(userId)}`
+      ),
+      apiFetch<MembershipPayment[]>(
+        '/api/MembershipPayment/my-payments'
+      )
+    ])
+
+    memberships.value = membershipResult ?? []
+
+    paymentHistory.value = (paymentResult ?? []).slice().sort(
+      (a, b) =>
+        new Date(b.paymentDate).getTime() -
+        new Date(a.paymentDate).getTime()
+    )
+  } catch (error) {
+    console.error('Ödeme geçmişi alınamadı:', error)
+
+    historyError.value =
+      error instanceof Error
+        ? error.message
+        : 'Ödeme geçmişi sunucudan alınamadı.'
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+const loadPageData = async () => {
+  await Promise.all([
+    loadPlans(),
+    loadPaymentHistory()
+  ])
+}
+
+const createPaymentRequest = async () => {
+  submitError.value = ''
+  submitSuccess.value = ''
+
+  if (!selectedPlan.value) {
+    submitError.value = 'Lütfen bir üyelik planı seçin.'
+    return
+  }
+
+  if (!paymentMethod.value) {
+    submitError.value = 'Lütfen bir ödeme yöntemi seçin.'
+    return
+  }
+
+  submitting.value = true
+
+  try {
+    await apiFetch('/api/MembershipPayment', {
+      method: 'POST',
+      body: {
+        membershipPlanId: selectedPlan.value.id,
+        paymentMethod: paymentMethod.value
+      }
+    })
+
+    submitSuccess.value =
+      'Ödeme talebiniz oluşturuldu. Yönetici onayından sonra üyeliğiniz aktif olacaktır.'
+
+    await loadPaymentHistory()
+  } catch (error) {
+    console.error('Ödeme talebi oluşturulamadı:', error)
+
+    submitError.value =
+      'Ödeme talebi oluşturulamadı. Oturumunuzu ve sunucu bağlantısını kontrol edip tekrar deneyin.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(() => {
+  loadPageData()
+})
+</script>
 
 <style scoped>
 
-/* =========================
-   Genel Sayfa
-========================= */
-
 .payments-page {
   min-height: calc(100vh - 75px);
-
   background:
-    linear-gradient(
-      rgba(245, 237, 228, 0.54),
-      rgba(245, 237, 228, 0.54)
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(255, 250, 242, 0.95) 0%,
+      transparent 48%
     ),
-    url("https://images.openai.com/static-rsc-4/xmPoryFkHin-rERvYKXFtYqEp51cj5lktGQMde8rwf827nL6z_I1_s116c5p_YutXUa6rLGoNMGvD6qI60fgm80NaihvgqBPXCrZjNv9HKfA_yCiMIMVlH_Tpk0icUCuzYBZ7cGa7_InYzyQw6XEtfHCNhH-3h_U95yftfn5oGClbRZNklaO4kOnKP2GfZSg?purpose=fullsize");
-
-  background-size: cover;
-
-  background-position: center;
-
+    radial-gradient(
+      ellipse at 100% 45%,
+      rgba(222, 194, 165, 0.42) 0%,
+      transparent 48%
+    ),
+    linear-gradient(
+      135deg,
+      #faf5ed 0%,
+      #f1e4d5 35%,
+      #e9d7c4 65%,
+      #f7eee4 100%
+    );
   background-attachment: fixed;
-
   color: #3f2b20;
-
   padding: 40px 24px 70px;
 }
 
 
 .payments-container {
   max-width: 1000px;
-
   margin: 0 auto;
 }
 
-
-/* =========================
-   Geri Dön
-========================= */
-
+/* Arka plansız geri dönüş bağlantısı */
 .back-link {
-  display: inline-block;
-
+  display: inline-flex;
+  align-items: center;
   margin-bottom: 25px;
-
-  padding: 7px 11px;
-
-  color: #7c4b2c;
-
-  background: rgba(255, 250, 244, 0.92);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 7px;
-
+  padding: 8px 0;
+  color: #684a35;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   text-decoration: none;
-
   font-size: 14px;
-
   font-weight: 600;
-
-  box-shadow:
-    0 2px 8px rgba(92, 57, 34, 0.06);
-
-  transition: 0.2s;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
-
 
 .back-link:hover {
-  color: #5f3822;
-
-  background: #fffaf4;
-
-  border-color: #cdb197;
-
+  color: #a85d2d;
+  background: transparent;
   transform: translateX(-2px);
-
-  box-shadow:
-    0 4px 10px rgba(92, 57, 34, 0.10);
 }
 
-
-/* =========================
-   Sayfa Başlığı
-========================= */
+/* Üst başlık kartı */
+.page-header,
+.payment-card,
+.history-card,
+.message-card {
+  background: rgba(255, 252, 248, 0.97);
+  border: 1px solid #dfc8b2;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(92, 57, 34, 0.08);
+}
 
 .page-header {
-  margin-bottom: 45px;
-
-  padding: 26px 28px;
-
-  background: rgba(255, 250, 244, 0.94);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 20px;
-
-  box-shadow:
-    0 8px 25px rgba(92, 57, 34, 0.08);
+  margin-bottom: 42px;
+  padding: 28px;
 }
 
-
-.subtitle {
-  display: inline-block;
-
-  margin: 0 0 10px;
-
-  padding: 5px 10px;
-
-  color: #7c4b2c;
-
-  background: #f5e6d5;
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 6px;
-
-  font-size: 11px;
-
+.page-header h1 {
+  margin: 0 0 12px;
+  color: #4b3021;
+  font-size: 28px;
   font-weight: 700;
-
-  letter-spacing: 1px;
+  line-height: 1.35;
 }
 
-
-
+.subtitle,
+.section-label {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 5px 10px;
+  color: #7c4b2c;
+  background: #f5e6d5;
+  border: 1px solid #dfc8b2;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
 
 .description {
-  color: #765b48;
-
-  font-size: 15px;
-
-  line-height: 1.6;
-
   max-width: 700px;
-
   margin: 0;
+  color: #765b48;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
-
-/* =========================
-   Bölümler
-========================= */
-
-.payment-section {
-  margin-bottom: 55px;
-}
-
-
+/* Bölüm başlıkları */
+.payment-section,
 .history-section {
-  margin-bottom: 30px;
+  margin-bottom: 48px;
 }
-
 
 .section-header {
   margin-bottom: 20px;
 }
 
-
-.section-title-group {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: flex-start;
-}
-
-
-.section-label {
-  display: inline-block;
-
-  margin: 0 0 7px;
-
-  padding: 5px 10px;
-
-  color: #7c4b2c;
-
-  background: #f5e6d5;
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 6px;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.8px;
-}
-
-
 .section-header h2 {
-  display: inline-block;
-
-  margin: 0 0 6px;
-
-  padding: 5px 12px;
-
+  margin: 0 0 8px;
   color: #4b3021;
-
-  background: rgba(255, 250, 244, 0.96);
-
-  border-radius: 7px;
-
   font-size: 24px;
-
   font-weight: 650;
-
-  letter-spacing: -0.4px;
-
-  box-shadow:
-    0 2px 8px rgba(92, 57, 34, 0.07);
 }
-
 
 .section-description {
-  display: block;
-
-  margin-left: 12px;
-
-  color: #765b48;
-
-  background: rgba(255, 250, 244, 0.90);
-
-  padding: 4px 9px;
-
-  border-radius: 5px;
-
-  font-size: 13px;
-
-  font-weight: 500;
-
-  line-height: 1.4;
-}
-
-
-/* =========================
-   Ödeme Kartı
-========================= */
-
-.payment-card {
-  background: rgba(255, 252, 248, 0.96);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 18px;
-
-  padding: 28px;
-
-  box-shadow:
-    0 10px 28px rgba(92, 57, 34, 0.09);
-}
-
-
-/* =========================
-   Seçilen Plan
-========================= */
-
-.selected-plan {
-  display: flex;
-
-  align-items: center;
-
-  gap: 16px;
-
-  padding-bottom: 24px;
-
-  border-bottom: 1px solid #ead9c9;
-}
-
-
-.plan-icon {
-  width: 52px;
-
-  height: 52px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  background: #f5e6d5;
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 13px;
-
-  font-size: 24px;
-}
-
-
-.plan-label {
-  color: #8a5835;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  letter-spacing: 1px;
-
-  margin: 0 0 5px;
-}
-
-
-.selected-plan h3 {
-  color: #4b3021;
-
-  font-size: 21px;
-
-  margin: 0 0 5px;
-}
-
-
-.plan-description {
-  color: #765b48;
-
-  font-size: 13px;
-
   margin: 0;
-}
-
-
-/* =========================
-   Ödeme Özeti
-========================= */
-
-.payment-summary {
-  padding: 22px 0;
-
-  border-bottom: 1px solid #ead9c9;
-}
-
-
-.summary-row {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
   color: #765b48;
-
-  font-size: 14px;
-
-  margin-bottom: 13px;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-
-.summary-row strong {
-  color: #4b3021;
+/* Ödeme kartı ve form alanları */
+.payment-card {
+  padding: 28px;
 }
-
-
-.summary-row.total {
-  margin-top: 18px;
-
-  padding-top: 18px;
-
-  border-top: 1px solid #ead9c9;
-
-  color: #4b3021;
-
-  font-size: 17px;
-
-  margin-bottom: 0;
-}
-
-
-.summary-row.total strong {
-  color: #a65f32;
-
-  font-size: 22px;
-}
-
-
-/* =========================
-   Form
-========================= */
-
-.payment-form {
-  padding-top: 24px;
-}
-
 
 .form-group {
   display: flex;
-
   flex-direction: column;
-
-  gap: 7px;
-
-  flex: 1;
+  gap: 8px;
 }
-
 
 .form-group label {
   color: #5d4232;
-
   font-size: 13px;
-
   font-weight: 600;
 }
 
-
-.form-group input {
-  width: 100%;
-
+.form-group select {
   box-sizing: border-box;
-
+  width: 100%;
   padding: 12px 13px;
-
   color: #4b3021;
-
   background: #fffdf9;
-
   border: 1px solid #d9c3ae;
-
   border-radius: 9px;
-
   font-size: 14px;
-
   outline: none;
-
-  transition: 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-
-.form-group input::placeholder {
-  color: #b29b88;
-}
-
-
-.form-group input:focus {
+.form-group select:focus {
   border-color: #b96b35;
-
-  box-shadow:
-    0 0 0 3px rgba(185, 107, 53, 0.12);
-
-  background: #fffaf4;
+  box-shadow: 0 0 0 3px rgba(185, 107, 53, 0.12);
 }
 
-
-.form-row {
-  display: grid;
-
-  grid-template-columns: 2fr 1fr 1fr;
-
-  gap: 15px;
-
-  margin-top: 18px;
+/* Seçilen plan */
+.selected-plan {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 25px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #ead9c9;
 }
 
+.plan-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: #f5e6d5;
+  border: 1px solid #dfc8b2;
+  border-radius: 13px;
+  font-size: 24px;
+}
 
-/* =========================
-   Ödeme Butonu
-========================= */
+.selected-plan-info {
+  min-width: 0;
+}
+
+.plan-label {
+  margin: 0 0 5px;
+  color: #8a5835;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.selected-plan h3 {
+  margin: 0 0 5px;
+  color: #4b3021;
+  font-size: 21px;
+}
+
+.plan-description {
+  margin: 0;
+  color: #765b48;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Ödeme özeti */
+.payment-summary {
+  padding: 22px 0;
+  border-bottom: 1px solid #ead9c9;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 13px;
+  color: #765b48;
+  font-size: 14px;
+}
+
+.summary-row strong {
+  color: #4b3021;
+  text-align: right;
+}
+
+.summary-row.total {
+  margin: 18px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #ead9c9;
+  color: #4b3021;
+  font-size: 17px;
+}
+
+.summary-row.total strong {
+  color: #a65f32;
+  font-size: 22px;
+}
+
+/* Ödeme yöntemi ve bilgilendirme */
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 24px;
+}
+
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 16px 18px;
+  color: #765b48;
+  background: rgba(255, 250, 244, 0.96);
+  border: 1px solid #dfc8b2;
+  border-radius: 12px;
+}
+
+.payment-notice {
+  margin: 0;
+}
+
+.info-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #f5e6d5;
+  border-radius: 8px;
+}
+
+.info-box strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #5a3927;
+  font-size: 14px;
+}
+
+.info-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* Butonlar */
+.payment-button,
+.secondary-button {
+  padding: 13px 16px;
+  color: #fff;
+  background: #b96b35;
+  border: 1px solid #b96b35;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
 
 .payment-button {
   width: 100%;
-
-  margin-top: 25px;
-
-  padding: 13px;
-
-  background: #b96b35;
-
-  color: white;
-
-  border: none;
-
-  border-radius: 9px;
-
-  font-size: 14px;
-
-  font-weight: 650;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 5px 14px rgba(139, 78, 37, 0.18);
-
-  transition: 0.2s;
 }
 
-
-.payment-button:hover {
+.payment-button:hover:not(:disabled),
+.secondary-button:hover {
   background: #a85d2d;
-
+  border-color: #a85d2d;
   transform: translateY(-1px);
-
-  box-shadow:
-    0 7px 17px rgba(139, 78, 37, 0.22);
 }
 
+.payment-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
 
-/* =========================
-   Ödeme Geçmişi
-========================= */
+.payment-button:focus-visible,
+.secondary-button:focus-visible,
+.back-link:focus-visible {
+  outline: 3px solid rgba(185, 107, 53, 0.35);
+  outline-offset: 3px;
+}
 
+/* Yükleniyor, boş durum ve hata kartları */
+.message-card {
+  padding: 20px;
+  color: #765b48;
+  line-height: 1.6;
+}
+
+.error-card {
+  border-color: #e3c2bc;
+}
+
+.error-card p {
+  margin: 0 0 12px;
+}
+
+/* Başarı ve hata bildirimleri */
+.feedback {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.error-feedback {
+  color: #8a4035;
+  background: #f9e9e6;
+  border: 1px solid #e3c2bc;
+}
+
+.success-feedback {
+  color: #397044;
+  background: #e4f2e5;
+  border: 1px solid #c8dfca;
+}
+
+/* Ödeme geçmişi tablosu */
 .history-card {
-  background: rgba(255, 252, 248, 0.96);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 18px;
-
   overflow: hidden;
-
-  box-shadow:
-    0 10px 28px rgba(92, 57, 34, 0.08);
 }
-
 
 .history-header,
 .history-row {
   display: grid;
-
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
-
   align-items: center;
-
   gap: 20px;
-
   padding: 18px 22px;
 }
 
-
 .history-header {
-  background: #f7ede2;
-
   color: #765b48;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
+  background: #f7ede2;
   border-bottom: 1px solid #dfc8b2;
+  font-size: 12px;
+  font-weight: 700;
 }
-
 
 .history-row {
   color: #765b48;
-
-  font-size: 14px;
-
   border-bottom: 1px solid #eee1d5;
-
-  transition: background 0.2s;
+  font-size: 14px;
 }
-
-
-.history-row:hover {
-  background: rgba(247, 237, 226, 0.45);
-}
-
 
 .history-row:last-child {
   border-bottom: none;
 }
 
-
 .history-row strong {
   color: #4b3021;
 }
 
+.history-plan {
+  overflow-wrap: anywhere;
+}
 
-.status-success {
+.status-badge {
   display: inline-block;
-
   width: fit-content;
-
-  background: #e4f2e5;
-
-  color: #397044;
-
   padding: 5px 10px;
-
-  border: 1px solid #c8dfca;
-
+  border: 1px solid transparent;
   border-radius: 15px;
-
   font-size: 12px;
-
   font-weight: 600;
 }
 
+.status-success {
+  color: #397044;
+  background: #e4f2e5;
+  border-color: #c8dfca;
+}
+
+.status-pending {
+  color: #8a5835;
+  background: #fff0d9;
+  border-color: #e9cfaa;
+}
 
 .mobile-label {
   display: none;
 }
 
-
-/* =========================
-   Bilgilendirme
-========================= */
-
-.info-box {
-  display: flex;
-
-  align-items: flex-start;
-
-  gap: 13px;
-
-  margin-top: 28px;
-
-  padding: 16px 18px;
-
-  background: rgba(255, 250, 244, 0.94);
-
-  border: 1px solid #dfc8b2;
-
-  border-radius: 12px;
-
-  color: #765b48;
+.bottom-info {
+  margin-top: 25px;
 }
 
-
-.info-icon {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 30px;
-
-  height: 30px;
-
-  flex-shrink: 0;
-
-  background: #f5e6d5;
-
-  border-radius: 8px;
-
-  font-size: 15px;
-}
-
-
-.info-box strong {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: #5a3927;
-
-  font-size: 14px;
-}
-
-
-.info-box p {
-  margin: 0;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-}
-
-
-/* =========================
-   Tablet
-========================= */
-
-@media (max-width: 900px) {
-
-  .payments-container {
-    max-width: 850px;
-  }
-
-}
-
-
-/* =========================
-   Mobil
-========================= */
-
+/* Tablet ve mobil */
 @media (max-width: 700px) {
-
   .payments-page {
-    padding: 35px 18px 55px;
+    padding: 30px 16px 50px;
   }
-
 
   .page-header {
+    margin-bottom: 32px;
     padding: 22px;
-
-    margin-bottom: 35px;
   }
-
 
   .page-header h1 {
-    font-size: 30px;
+    font-size: 24px;
   }
-
-
-  .description {
-    font-size: 14px;
-  }
-
 
   .payment-card {
-    padding: 21px;
-  }
-
-
-  .selected-plan {
-    align-items: flex-start;
-  }
-
-
-  .form-row {
-    grid-template-columns: 1fr;
-
-    gap: 15px;
-  }
-
-
-  .history-header {
-    display: none;
-  }
-
-
-  .history-row {
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: 8px;
-
     padding: 20px;
   }
-
-
-  .history-row > strong {
-    display: none;
-  }
-
-
-  .mobile-label {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 3px;
-  }
-
-
-  .mobile-label span {
-    color: #8b7463;
-
-    font-size: 11px;
-  }
-
-
-  .status-success {
-    margin-top: 3px;
-  }
-
 
   .section-header h2 {
     font-size: 21px;
   }
 
-
-  .section-description {
-    margin-left: 8px;
-
-    font-size: 12px;
+  .history-header {
+    display: none;
   }
 
+  .history-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .history-row > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .mobile-label {
+    display: block;
+    color: #8b7463;
+    font-size: 11px;
+  }
+
+  .summary-row {
+    font-size: 13px;
+  }
 
   .info-box {
     padding: 14px;
   }
-
 }
 
-
-/* =========================
-   Küçük Telefon
-========================= */
-
-@media (max-width: 450px) {
-
+@media (max-width: 380px) {
   .payments-page {
-    padding-left: 14px;
-
-    padding-right: 14px;
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
-
-  .page-header h1 {
-    font-size: 27px;
-  }
-
-
-  .payment-card {
+  .page-header {
     padding: 18px;
   }
 
+  .payment-card {
+    padding: 16px;
+  }
 
-  .selected-plan h3 {
+  .summary-row {
+    gap: 10px;
+  }
+
+  .summary-row.total strong {
     font-size: 19px;
   }
 
-
-  .summary-row.total {
-    font-size: 16px;
+  .selected-plan {
+    align-items: flex-start;
+    gap: 12px;
   }
 
-
-  .summary-row.total strong {
-    font-size: 20px;
+  .plan-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 21px;
   }
-
 }
-
 </style>

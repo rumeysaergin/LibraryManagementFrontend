@@ -1,0 +1,797 @@
+/* =========================================================
+   Admin Paneli — Books / Index ile Birebir Uyumlu Tema
+========================================================= */
+
+/* Ana Yerleşim */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f6f0e7;
+  color: #46372d;
+  font-family: inherit;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 32px 30px 60px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* =========================================================
+   Sayfa Başlığı (books/index.vue .page-header ile birebir)
+========================================================= */
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 30px;
+  padding: 30px 34px;
+  overflow: hidden;
+  background: linear-gradient(
+    120deg,
+    #fffdf9 0%,
+    #fcf5ed 48%,
+    #f9eee2 100%
+  );
+  border: 1px solid #e7d5c3;
+  border-radius: 18px;
+  box-shadow: 0 7px 22px rgba(90, 59, 36, 0.055);
+}
+
+.page-header::after {
+  position: absolute;
+  top: -65px;
+  right: -35px;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(169, 115, 72, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.page-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #a06a3e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  margin: 0 0 10px;
+  color: #493122;
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+  line-height: 1.2;
+}
+
+.page-desc,
+.page-header p {
+  margin: 0;
+  color: #816b58;
+  line-height: 1.7;
+  max-width: 680px;
+  font-size: 14px;
+}
+
+.header-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 15px;
+  font-size: 35px;
+}
+
+/* =========================================================
+   Birincil Butonlar (Add, Submit, Action)
+========================================================= */
+.add-button,
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 10px;
+  background: #b96b35;
+  color: #fffaf4;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid #b96b35;
+  box-shadow: 0 3px 8px rgba(185, 107, 53, 0.18);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-button:hover,
+.submit-btn:hover:not(:disabled) {
+  background: #a95e2c;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(169, 94, 44, 0.22);
+}
+
+.submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #78583f;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.cancel-btn:hover,
+.secondary-button:hover {
+  background: #fdf5ec;
+  border-color: #d8c2ad;
+  color: #4b3021;
+}
+
+/* =========================================================
+   Form Kartı
+========================================================= */
+.form-card {
+  margin-bottom: 28px;
+  padding: 26px 28px;
+  border: 1px solid #e6d8c9;
+  border-radius: 18px;
+  background: #fffdf9;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
+}
+
+.form-card h2 {
+  color: #493122;
+  font-size: 22px;
+  font-weight: 750;
+  margin: 0 0 20px;
+  letter-spacing: -0.4px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group label {
+  color: #7c4b2c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #594333;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #a4876d;
+  box-shadow: 0 0 0 3px rgb(120 88 63 / 10%);
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+/* =========================================================
+   Arama ve Filtreleme Bölümü (books/index.vue .filters ile birebir)
+========================================================= */
+.filters-section,
+.filters-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border: 1px solid #e5d7c8;
+  border-radius: 18px;
+  background: #fffdf9;
+  box-shadow: 0 5px 18px rgb(75 52 35 / 5%);
+}
+
+.search-bar,
+.search-box {
+  position: relative;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  transform: translateY(-52%);
+  color: #8b6b52;
+  font-size: 22px;
+  pointer-events: none;
+}
+
+.search-bar input,
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 13px 12px 42px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #594333;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.search-bar input::placeholder,
+.search-box input::placeholder {
+  color: #a08d7d;
+}
+
+.search-bar input:focus,
+.search-box input:focus,
+.filter-select:focus {
+  border-color: #a4876d;
+  box-shadow: 0 0 0 3px rgb(120 88 63 / 10%);
+}
+
+.filter-select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #e5d7c8;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #594333;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* =========================================================
+   Tablo & Liste Kartı
+========================================================= */
+.table-wrapper {
+  background: #fffdf9;
+  border: 1px solid #e6d8c9;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
+  overflow: hidden;
+}
+
+.table-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  background: linear-gradient(120deg, #fffdf9 0%, #fcf5ed 100%);
+  border-bottom: 1px solid #e6d8c9;
+}
+
+.result-count {
+  padding: 6px 12px;
+  border: 1px solid #e5d7c8;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #78583f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 14px 18px;
+  background: #fcf5ed;
+  color: #7c4b2c;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.3px;
+  text-align: left;
+  border-bottom: 1px solid #e7d5c3;
+}
+
+.data-table td {
+  padding: 15px 18px;
+  color: #493122;
+  font-size: 14px;
+  border-bottom: 1px solid #f2e7db;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background: #fbf6f0;
+}
+
+.empty-row {
+  text-align: center;
+  color: #92755c;
+  padding: 40px !important;
+  font-size: 14px;
+}
+
+/* =========================================================
+   İstatistik Kartları (Dashboard & Sayfalar)
+========================================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 24px;
+  background: #fffdf9;
+  border: 1px solid #e6d8c9;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgb(75 52 35 / 9%);
+}
+
+.stat-icon {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 14px;
+  font-size: 26px;
+}
+
+.stat-title {
+  color: #816b58;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 5px;
+}
+
+.stat-value {
+  color: #493122;
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* İstatistik Hapları (Stats Row) */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px;
+  background: #fffdf9;
+  border: 1px solid #e6d8c9;
+  border-radius: 16px;
+  box-shadow: 0 5px 16px rgb(75 52 35 / 5%);
+}
+
+.pill-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 12px;
+  font-size: 20px;
+}
+
+.pill-label {
+  color: #816b58;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat-pill strong {
+  color: #493122;
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+/* =========================================================
+   Aksiyon Kartları (Dashboard Hızlı Erişim)
+========================================================= */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.action-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  background: #fffdf9;
+  border: 1px solid #e6d8c9;
+  border-radius: 18px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.action-card:hover {
+  border-color: #d8c2ad;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgb(75 52 35 / 9%);
+}
+
+.action-icon {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 13px;
+  font-size: 24px;
+}
+
+.action-card h3 {
+  color: #493122;
+  font-size: 16px;
+  font-weight: 750;
+  margin: 0 0 5px;
+}
+
+.action-card p {
+  color: #816b58;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.arrow {
+  margin-left: auto;
+  color: #b96b35;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   Tablo İşlem Butonları (Düzenle, Sil, vs.)
+========================================================= */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  background: #fdf5ec;
+  color: #7c4b2c;
+  border: 1px solid #e7d5c3;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.edit-btn:hover {
+  background: #f5e6d5;
+  border-color: #d8be9f;
+  color: #493122;
+}
+
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  background: #fff5f2;
+  color: #a84d3d;
+  border: 1px solid #f0d0c8;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.delete-btn:hover {
+  background: #fde8e3;
+  border-color: #e5b3a8;
+  color: #8a3427;
+}
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  background: #f0f7f0;
+  color: #2e7d32;
+  border: 1px solid #cce3cc;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.save-btn:hover {
+  background: #e1efe1;
+}
+
+/* =========================================================
+   Badgeler (Durum Etiketleri)
+========================================================= */
+.role-badge,
+.paid-badge,
+.unpaid-badge,
+.returned-badge,
+.active-badge,
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-badge {
+  background: #493122;
+  color: #fffaf4;
+}
+
+.user-badge {
+  background: #fdf5ec;
+  color: #7c4b2c;
+  border: 1px solid #e7d5c3;
+}
+
+.paid-badge,
+.returned-badge {
+  background: #eef8ee;
+  color: #276a2b;
+  border: 1px solid #c6e6c6;
+}
+
+.unpaid-badge,
+.overdue-badge {
+  background: #fff3f0;
+  color: #a84d3d;
+  border: 1px solid #f2c7bd;
+}
+
+.active-badge {
+  background: #fdf5ec;
+  color: #7c4b2c;
+  border: 1px solid #e7d5c3;
+}
+
+.isbn-code,
+.id-code {
+  font-family: monospace;
+  font-size: 12px;
+  background: #fdf5ec;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid #e7d5c3;
+  color: #7c4b2c;
+}
+
+/* =========================================================
+   Geri Dönüş Bağlantısı (books/index.vue .back-link ile birebir)
+========================================================= */
+.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #785b46;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.back-link:hover {
+  color: #4c3527;
+  transform: translateX(-2px);
+}
+
+/* =========================================================
+   Mesajlar & Durum Kartları
+========================================================= */
+.msg {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.msg.success {
+  background: #eef8ee;
+  color: #276a2b;
+  border: 1px solid #c6e6c6;
+}
+
+.msg.error {
+  background: #fff3f0;
+  color: #a84d3d;
+  border: 1px solid #f2c7bd;
+}
+
+.state-card {
+  text-align: center;
+  padding: 60px 24px;
+  background: #fffdf9;
+  border: 1px solid #e6d8c9;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgb(75 52 35 / 5%);
+}
+
+.state-card p {
+  color: #816b58;
+  font-size: 15px;
+  margin: 12px 0;
+}
+
+.loader {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #efe0d0;
+  border-top-color: #b96b35;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   Responsive
+========================================================= */
+@media (max-width: 1024px) {
+  .stats-grid,
+  .actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    padding: 20px 16px 40px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px 20px;
+  }
+
+  .header-icon {
+    display: none;
+  }
+
+  .stats-grid,
+  .actions-grid,
+  .filters-section,
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}
