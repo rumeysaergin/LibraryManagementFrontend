@@ -9,44 +9,25 @@
         <div class="header-content">
           <span class="page-eyebrow">YAZAR YÖNETİMİ</span>
           <h1>Yazarlar</h1>
-          <p class="page-desc">Kitap yazarlarını görüntüleyin, düzenleyin ve yeni yazarlar kaydedin.</p>
+          <p class="page-desc">Kitap yazarlarını görüntüleyin, düzenleyin ve yeni yazarlar kaydedin. Tüm işlemler modal pencereleriyle yapılır.</p>
         </div>
         <div style="display: flex; align-items: center; gap: 16px; z-index: 1;">
-          <button class="add-button" @click="showAddForm = !showAddForm">
-            {{ showAddForm ? '✕ İptal' : '+ Yeni Yazar' }}
+          <button class="add-button" @click="openAddAuthorModal">
+            + Yeni Yazar
           </button>
           <div class="header-icon" aria-hidden="true">✍️</div>
         </div>
       </header>
 
-
-      <!-- Ekle formu -->
-      <div v-if="showAddForm" class="form-card">
-        <h2>Yeni Yazar Ekle</h2>
-
-        <div v-if="formError" class="msg error">⚠️ {{ formError }}</div>
-        <div v-if="formSuccess" class="msg success">✓ {{ formSuccess }}</div>
-
-        <form class="form-grid" @submit.prevent="addAuthor">
-          <div class="form-group">
-            <label>Yazar Adı / Soyadı</label>
-            <input v-model="newAuthor.name" type="text" placeholder="Yazar adını girin" required />
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="submit-btn" :disabled="formLoading">
-              {{ formLoading ? 'Ekleniyor...' : 'Yazar Ekle' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
+      <!-- Bildirim mesajları -->
+      <div v-if="pageSuccess" class="msg success">✓ {{ pageSuccess }}</div>
+      <div v-if="pageError" class="msg error">⚠️ {{ pageError }}</div>
 
       <!-- Arama -->
       <div class="search-bar">
         <span class="search-icon">⌕</span>
         <input v-model="searchQuery" type="text" placeholder="Yazar adı ile ara..." />
       </div>
-
 
       <!-- Yükleniyor -->
       <div v-if="loading" class="state-card">
@@ -81,26 +62,19 @@
 
             <tr v-for="author in filteredAuthors" :key="author.id">
               <td>
-                <div v-if="editingId !== author.id" class="author-name-cell">
+                <div class="author-name-cell">
                   <span class="author-icon">✍️</span>
                   <strong>{{ getAuthorName(author) }}</strong>
-                </div>
-                <div v-else class="inline-edit">
-                  <input v-model="editingName" type="text" class="inline-input" />
                 </div>
               </td>
               <td>
                 <div class="action-buttons">
-                  <template v-if="editingId !== author.id">
-                    <button class="edit-btn" @click="startEdit(author)">✏️ Düzenle</button>
-                    <button class="delete-btn" @click="deleteAuthor(author)">🗑️ Sil</button>
-                  </template>
-                  <template v-else>
-                    <button class="save-btn" :disabled="saving" @click="saveAuthor(author)">
-                      {{ saving ? '...' : '✓ Kaydet' }}
-                    </button>
-                    <button class="cancel-btn" @click="editingId = null">✕ İptal</button>
-                  </template>
+                  <button class="edit-btn" @click="openEditAuthorModal(author)">
+                    ✏️ Düzenle
+                  </button>
+                  <button class="delete-btn" @click="openDeleteAuthorModal(author)">
+                    🗑️ Sil
+                  </button>
                 </div>
               </td>
             </tr>
@@ -108,14 +82,99 @@
         </table>
       </div>
 
+      <!-- ==============================================
+           MODAL 1: YENİ YAZAR EKLE (MODAL)
+           ============================================== -->
+      <AdminModal
+        v-model="showAddModal"
+        title="Yeni Yazar Ekle"
+        subtitle="Sisteme yeni bir yazar tanımlayın."
+        icon="✍️"
+      >
+        <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+        <form class="modal-form" @submit.prevent="addAuthor">
+          <div class="form-group">
+            <label>Yazar Adı / Soyadı</label>
+            <input
+              v-model="newAuthor.name"
+              type="text"
+              placeholder="Örn: Fyodor Dostoyevski"
+              required
+            />
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showAddModal = false">İptal</button>
+            <button type="submit" class="submit-btn" :disabled="modalLoading">
+              {{ modalLoading ? 'Ekleniyor...' : 'Yazarı Ekle' }}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <!-- ==============================================
+           MODAL 2: YAZAR DÜZENLE (MODAL)
+           ============================================== -->
+      <AdminModal
+        v-model="showEditModal"
+        title="Yazar Bilgilerini Düzenle"
+        subtitle="Yazar adını güncelleyin."
+        icon="✏️"
+      >
+        <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+        <form class="modal-form" @submit.prevent="updateAuthor">
+          <div class="form-group">
+            <label>Yazar Adı / Soyadı</label>
+            <input
+              v-model="editAuthorForm.name"
+              type="text"
+              required
+            />
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showEditModal = false">İptal</button>
+            <button type="submit" class="submit-btn" :disabled="modalLoading">
+              {{ modalLoading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <!-- ==============================================
+           MODAL 3: YAZAR SİLME MODALI
+           ============================================== -->
+      <AdminModal
+        v-model="showDeleteModal"
+        title="Yazarı Sil"
+        subtitle="Bu yazarı sistemden silmek istediğinize emin misiniz?"
+        icon="🗑️"
+      >
+        <div class="modal-form">
+          <p v-if="targetAuthor" style="color: #b93828;">
+            ⚠️ <strong>{{ getAuthorName(targetAuthor) }}</strong> adlı yazar silinecektir.
+          </p>
+          <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showDeleteModal = false">İptal</button>
+            <button
+              type="button"
+              class="delete-btn"
+              :disabled="modalLoading"
+              @click="confirmDeleteAuthor"
+            >
+              {{ modalLoading ? 'Siliniyor...' : 'Evet, Yazarı Sil' }}
+            </button>
+          </div>
+        </div>
+      </AdminModal>
+
     </main>
 
   </div>
 </template>
 
-
 <script setup lang="ts">
-
 interface Author {
   id: string
   name?: string
@@ -131,19 +190,24 @@ const loading = ref(true)
 const loadError = ref('')
 const searchQuery = ref('')
 
-const showAddForm = ref(false)
-const formLoading = ref(false)
-const formError = ref('')
-const formSuccess = ref('')
-const newAuthor = ref({ name: '' })
+const pageSuccess = ref('')
+const pageError = ref('')
 
-const editingId = ref<string | null>(null)
-const editingName = ref('')
-const saving = ref(false)
+// Modal durumları
+const showAddModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteModal = ref(false)
+
+const modalLoading = ref(false)
+const modalError = ref('')
+
+const newAuthor = ref({ name: '' })
+const editAuthorForm = ref({ id: '', name: '' })
+const targetAuthor = ref<Author | null>(null)
 
 const getAuthorName = (author: Author) => {
   if (author.name) return author.name
-  return `${author.firstName ?? ''} ${author.lastName ?? ''}`.trim() || 'İsimsiz Yazar'
+  return `${author.firstName ?? ''} ${author.lastName ?? ''}`.trim() || 'Bilinmeyen Yazar'
 }
 
 const filteredAuthors = computed(() => {
@@ -152,9 +216,87 @@ const filteredAuthors = computed(() => {
   return authors.value.filter(a => getAuthorName(a).toLowerCase().includes(q))
 })
 
-const startEdit = (author: Author) => {
-  editingId.value = author.id
-  editingName.value = getAuthorName(author)
+// Modal Açıcılar
+const openAddAuthorModal = () => {
+  newAuthor.value = { name: '' }
+  modalError.value = ''
+  showAddModal.value = true
+}
+
+const openEditAuthorModal = (author: Author) => {
+  targetAuthor.value = author
+  editAuthorForm.value = {
+    id: author.id,
+    name: getAuthorName(author)
+  }
+  modalError.value = ''
+  showEditModal.value = true
+}
+
+const openDeleteAuthorModal = (author: Author) => {
+  targetAuthor.value = author
+  modalError.value = ''
+  showDeleteModal.value = true
+}
+
+// 1. Yeni Yazar Ekle (Modal)
+const addAuthor = async () => {
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch('/api/Author', {
+      method: 'POST',
+      body: { name: newAuthor.value.name.trim() }
+    })
+    showAddModal.value = false
+    pageSuccess.value = 'Yazar başarıyla eklendi.'
+    await loadAuthors()
+  } catch (error: any) {
+    console.error('Yazar eklenemedi:', error)
+    modalError.value = error?.data?.message || 'Yazar eklenirken bir hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+// 2. Yazar Bilgisini Güncelle (Modal)
+const updateAuthor = async () => {
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/Author/${editAuthorForm.value.id}`, {
+      method: 'PUT',
+      body: { name: editAuthorForm.value.name.trim() }
+    })
+    showEditModal.value = false
+    pageSuccess.value = 'Yazar başarıyla güncellendi.'
+    await loadAuthors()
+  } catch (error: any) {
+    console.error('Yazar güncellenemedi:', error)
+    modalError.value = error?.data?.message || 'Yazar güncellenirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+// 3. Yazar Sil
+const confirmDeleteAuthor = async () => {
+  if (!targetAuthor.value) return
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/Author/${targetAuthor.value.id}`, {
+      method: 'DELETE'
+    })
+    showDeleteModal.value = false
+    pageSuccess.value = 'Yazar başarıyla silindi.'
+    await loadAuthors()
+  } catch (error: any) {
+    console.error('Yazar silinemedi:', error)
+    modalError.value = error?.data?.message || 'Yazar silinirken bir hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
 }
 
 const loadAuthors = async () => {
@@ -163,65 +305,10 @@ const loadAuthors = async () => {
   try {
     const data = await apiFetch<Author[]>('/api/Author')
     authors.value = Array.isArray(data) ? data : []
-  }
-  catch {
-    loadError.value = 'Yazarlar yüklenirken hata oluştu.'
-  }
-  finally {
+  } catch {
+    loadError.value = 'Yazarlar yüklenirken bir hata oluştu.'
+  } finally {
     loading.value = false
-  }
-}
-
-const addAuthor = async () => {
-  formError.value = ''
-  formSuccess.value = ''
-  formLoading.value = true
-  try {
-    await apiFetch('/api/Author', {
-      method: 'POST',
-      body: { name: newAuthor.value.name }
-    })
-    formSuccess.value = 'Yazar başarıyla eklendi.'
-    newAuthor.value = { name: '' }
-    showAddForm.value = false
-    await loadAuthors()
-  }
-  catch (error: any) {
-    formError.value = error?.data?.message ?? 'Yazar eklenirken hata oluştu.'
-  }
-  finally {
-    formLoading.value = false
-  }
-}
-
-const saveAuthor = async (author: Author) => {
-  saving.value = true
-  try {
-    await apiFetch(`/api/Author/${author.id}`, {
-      method: 'PUT',
-      body: { name: editingName.value }
-    })
-    editingId.value = null
-    await loadAuthors()
-  }
-  catch (error: any) {
-    window.alert(error?.data?.message ?? 'Yazar güncellenirken hata oluştu.')
-  }
-  finally {
-    saving.value = false
-  }
-}
-
-const deleteAuthor = async (author: Author) => {
-  const name = getAuthorName(author)
-  const confirmed = window.confirm(`"${name}" yazarını silmek istediğinize emin misiniz?`)
-  if (!confirmed) return
-  try {
-    await apiFetch(`/api/Author/${author.id}`, { method: 'DELETE' })
-    await loadAuthors()
-  }
-  catch (error: any) {
-    window.alert(error?.data?.message ?? 'Yazar silinirken hata oluştu.')
   }
 }
 
@@ -229,56 +316,8 @@ onMounted(async () => {
   await checkAdminAuth()
   await loadAuthors()
 })
-
 </script>
 
-
 <style scoped>
-@import "../../../styles/admin.css";
 
-.author-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.author-icon {
-  font-size: 16px;
-}
-
-.inline-edit {
-  display: flex;
-  align-items: center;
-}
-
-.inline-input {
-  padding: 7px 10px;
-  border: 1px solid #b96b35;
-  border-radius: 7px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #3f2b20;
-  outline: none;
-  width: 240px;
-}
-
-.cancel-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: transparent;
-  color: #765b48;
-  border: 1px solid #dfc8b2;
-  border-radius: 7px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.cancel-btn:hover {
-  background: #f5e6d5;
-}
 </style>

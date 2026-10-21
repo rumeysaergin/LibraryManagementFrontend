@@ -9,63 +9,25 @@
         <div class="header-content">
           <span class="page-eyebrow">ÜYELİK YÖNETİMİ</span>
           <h1>Üyelik Planları</h1>
-          <p class="page-desc">Kütüphane üyelik planlarını, ödünç alma limitlerini ve ücretlendirmeleri yönetin.</p>
+          <p class="page-desc">Kütüphane üyelik planlarını, ödünç alma limitlerini ve ücretlendirmeleri yönetin. Tüm ekleme ve düzenleme işlemlerini modal üzerinden gerçekleştirin.</p>
         </div>
         <div style="display: flex; align-items: center; gap: 16px; z-index: 1;">
-          <button class="add-button" @click="toggleForm">
-            {{ showForm ? '✕ İptal' : '+ Yeni Plan Ekle' }}
+          <button class="add-button" @click="openAddPlanModal">
+            + Yeni Plan Ekle
           </button>
           <div class="header-icon" aria-hidden="true">👤</div>
         </div>
       </header>
 
-
-      <!-- Ekle / Düzenle Formu -->
-      <div v-if="showForm" class="form-card">
-        <h2>{{ editingPlanId ? 'Planı Düzenle' : 'Yeni Üyelik Planı Ekle' }}</h2>
-
-        <div v-if="formError" class="msg error">⚠️ {{ formError }}</div>
-        <div v-if="formSuccess" class="msg success">✓ {{ formSuccess }}</div>
-
-        <form class="form-grid" @submit.prevent="savePlan">
-
-          <div class="form-group">
-            <label>Plan Adı</label>
-            <input v-model="formData.name" type="text" placeholder="Örn: Standart Plan, Premium Plan" required />
-          </div>
-
-          <div class="form-group">
-            <label>Maksimum Ödünç Limiti (Kitap Sayısı)</label>
-            <input v-model.number="formData.maxBorrowLimit" type="number" min="1" required />
-          </div>
-
-          <div class="form-group">
-            <label>Ücret (₺)</label>
-            <input v-model.number="formData.price" type="number" min="0" step="0.01" required />
-          </div>
-
-          <div class="form-group">
-            <label>Geçerlilik Süresi (Gün)</label>
-            <input v-model.number="formData.durationInDays" type="number" min="1" required />
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="resetForm">İptal</button>
-            <button type="submit" class="submit-btn" :disabled="formLoading">
-              {{ formLoading ? 'Kaydediliyor...' : (editingPlanId ? 'Güncelle' : 'Plan Ekle') }}
-            </button>
-          </div>
-
-        </form>
-      </div>
-
+      <!-- Bildirim mesajları -->
+      <div v-if="pageSuccess" class="msg success">✓ {{ pageSuccess }}</div>
+      <div v-if="pageError" class="msg error">⚠️ {{ pageError }}</div>
 
       <!-- Arama -->
       <div class="search-bar">
         <span class="search-icon">⌕</span>
         <input v-model="searchQuery" type="text" placeholder="Plan adı ile ara..." />
       </div>
-
 
       <!-- Yükleniyor -->
       <div v-if="loading" class="state-card">
@@ -117,8 +79,12 @@
               <td>{{ plan.durationInDays }} Gün</td>
               <td>
                 <div class="action-buttons">
-                  <button class="edit-btn" @click="startEdit(plan)">✏️ Düzenle</button>
-                  <button class="delete-btn" @click="deletePlan(plan)">🗑️ Sil</button>
+                  <button class="edit-btn" @click="openEditPlanModal(plan)">
+                    ✏️ Düzenle
+                  </button>
+                  <button class="delete-btn" @click="openDeletePlanModal(plan)">
+                    🗑️ Sil
+                  </button>
                 </div>
               </td>
             </tr>
@@ -126,14 +92,120 @@
         </table>
       </div>
 
+      <!-- ==============================================
+           MODAL 1: YENİ PLAN EKLE (MODAL)
+           ============================================== -->
+      <AdminModal
+        v-model="showAddModal"
+        title="Yeni Üyelik Planı Ekle"
+        subtitle="Kütüphane kullanıcıları için yeni bir abonelik/üyelik planı oluşturun."
+        icon="👤"
+      >
+        <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+        <form class="modal-form" @submit.prevent="addPlan">
+          <div class="form-group">
+            <label>Plan Adı</label>
+            <input v-model="formData.name" type="text" placeholder="Örn: Standart Plan, Öğrenci Planı" required />
+          </div>
+
+          <div class="form-group">
+            <label>Maksimum Ödünç Limiti (Kitap Sayısı)</label>
+            <input v-model.number="formData.maxBorrowLimit" type="number" min="1" required />
+          </div>
+
+          <div class="form-group">
+            <label>Ücret (₺)</label>
+            <input v-model.number="formData.price" type="number" min="0" step="0.01" required />
+          </div>
+
+          <div class="form-group">
+            <label>Geçerlilik Süresi (Gün)</label>
+            <input v-model.number="formData.durationInDays" type="number" min="1" required />
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showAddModal = false">İptal</button>
+            <button type="submit" class="submit-btn" :disabled="modalLoading">
+              {{ modalLoading ? 'Ekleniyor...' : 'Planı Kaydet' }}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <!-- ==============================================
+           MODAL 2: PLAN DÜZENLE (MODAL)
+           ============================================== -->
+      <AdminModal
+        v-model="showEditModal"
+        title="Üyelik Planını Düzenle"
+        subtitle="Plan limitlerini, fiyatını ve geçerlilik süresini güncelleyin."
+        icon="✏️"
+      >
+        <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+        <form class="modal-form" @submit.prevent="updatePlan">
+          <div class="form-group">
+            <label>Plan Adı</label>
+            <input v-model="editFormData.name" type="text" required />
+          </div>
+
+          <div class="form-group">
+            <label>Maksimum Ödünç Limiti (Kitap Sayısı)</label>
+            <input v-model.number="editFormData.maxBorrowLimit" type="number" min="1" required />
+          </div>
+
+          <div class="form-group">
+            <label>Ücret (₺)</label>
+            <input v-model.number="editFormData.price" type="number" min="0" step="0.01" required />
+          </div>
+
+          <div class="form-group">
+            <label>Geçerlilik Süresi (Gün)</label>
+            <input v-model.number="editFormData.durationInDays" type="number" min="1" required />
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showEditModal = false">İptal</button>
+            <button type="submit" class="submit-btn" :disabled="modalLoading">
+              {{ modalLoading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <!-- ==============================================
+           MODAL 3: PLAN SİLME MODALI
+           ============================================== -->
+      <AdminModal
+        v-model="showDeleteModal"
+        title="Üyelik Planını Sil"
+        subtitle="Bu üyelik planını sistemden silmek istediğinize emin misiniz?"
+        icon="🗑️"
+      >
+        <div class="modal-form">
+          <p v-if="targetPlan" style="color: #b93828;">
+            ⚠️ <strong>{{ targetPlan.name }}</strong> adlı plan silinecektir.
+          </p>
+          <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showDeleteModal = false">İptal</button>
+            <button
+              type="button"
+              class="delete-btn"
+              :disabled="modalLoading"
+              @click="confirmDeletePlan"
+            >
+              {{ modalLoading ? 'Siliniyor...' : 'Evet, Planı Sil' }}
+            </button>
+          </div>
+        </div>
+      </AdminModal>
+
     </main>
 
   </div>
 </template>
 
-
 <script setup lang="ts">
-
 interface MembershipPlan {
   id: string
   name: string
@@ -150,11 +222,16 @@ const loading = ref(true)
 const loadError = ref('')
 const searchQuery = ref('')
 
-const showForm = ref(false)
-const formLoading = ref(false)
-const formError = ref('')
-const formSuccess = ref('')
-const editingPlanId = ref<string | null>(null)
+const pageSuccess = ref('')
+const pageError = ref('')
+
+// Modal States
+const showAddModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteModal = ref(false)
+
+const modalLoading = ref(false)
+const modalError = ref('')
 
 const formData = ref({
   name: '',
@@ -163,44 +240,121 @@ const formData = ref({
   durationInDays: 30
 })
 
+const editFormData = ref({
+  id: '',
+  name: '',
+  maxBorrowLimit: 3,
+  price: 0,
+  durationInDays: 30
+})
+
+const targetPlan = ref<MembershipPlan | null>(null)
+
 const filteredPlans = computed(() => {
   const q = searchQuery.value.toLowerCase().trim()
   if (!q) return plans.value
   return plans.value.filter(p => p.name.toLowerCase().includes(q))
 })
 
-const toggleForm = () => {
-  if (showForm.value) {
-    resetForm()
-  } else {
-    showForm.value = true
-  }
-}
-
-const resetForm = () => {
-  showForm.value = false
-  editingPlanId.value = null
-  formError.value = ''
-  formSuccess.value = ''
+// Modal Açıcılar
+const openAddPlanModal = () => {
   formData.value = {
     name: '',
     maxBorrowLimit: 3,
     price: 0,
     durationInDays: 30
   }
+  modalError.value = ''
+  showAddModal.value = true
 }
 
-const startEdit = (plan: MembershipPlan) => {
-  editingPlanId.value = plan.id
-  formData.value = {
+const openEditPlanModal = (plan: MembershipPlan) => {
+  targetPlan.value = plan
+  editFormData.value = {
+    id: plan.id,
     name: plan.name,
     maxBorrowLimit: plan.maxBorrowLimit,
     price: plan.price,
     durationInDays: plan.durationInDays
   }
-  formError.value = ''
-  formSuccess.value = ''
-  showForm.value = true
+  modalError.value = ''
+  showEditModal.value = true
+}
+
+const openDeletePlanModal = (plan: MembershipPlan) => {
+  targetPlan.value = plan
+  modalError.value = ''
+  showDeleteModal.value = true
+}
+
+// 1. Yeni Plan Ekle (Modal)
+const addPlan = async () => {
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch('/api/MembershipPlan', {
+      method: 'POST',
+      body: {
+        name: formData.value.name,
+        maxBorrowLimit: formData.value.maxBorrowLimit,
+        price: formData.value.price,
+        durationInDays: formData.value.durationInDays
+      }
+    })
+    showAddModal.value = false
+    pageSuccess.value = 'Üyelik planı başarıyla eklendi.'
+    await loadPlans()
+  } catch (error: any) {
+    console.error('Plan eklenemedi:', error)
+    modalError.value = error?.data?.message || 'Plan eklenirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+// 2. Plan Güncelle (Modal)
+const updatePlan = async () => {
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/MembershipPlan/${editFormData.value.id}`, {
+      method: 'PUT',
+      body: {
+        name: editFormData.value.name,
+        maxBorrowLimit: editFormData.value.maxBorrowLimit,
+        price: editFormData.value.price,
+        durationInDays: editFormData.value.durationInDays
+      }
+    })
+    showEditModal.value = false
+    pageSuccess.value = 'Üyelik planı başarıyla güncellendi.'
+    await loadPlans()
+  } catch (error: any) {
+    console.error('Plan güncellenemedi:', error)
+    modalError.value = error?.data?.message || 'Plan güncellenirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+// 3. Plan Sil
+const confirmDeletePlan = async () => {
+  if (!targetPlan.value) return
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/MembershipPlan/${targetPlan.value.id}`, {
+      method: 'DELETE'
+    })
+    showDeleteModal.value = false
+    pageSuccess.value = 'Üyelik planı başarıyla silindi.'
+    await loadPlans()
+  } catch (error: any) {
+    console.error('Plan silinemedi:', error)
+    modalError.value = error?.data?.message || 'Plan silinirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
 }
 
 const loadPlans = async () => {
@@ -209,68 +363,10 @@ const loadPlans = async () => {
   try {
     const data = await apiFetch<MembershipPlan[]>('/api/MembershipPlan')
     plans.value = Array.isArray(data) ? data : []
-  }
-  catch {
-    loadError.value = 'Üyelik planları yüklenirken hata oluştu.'
-  }
-  finally {
+  } catch {
+    loadError.value = 'Planlar yüklenirken bir hata oluştu.'
+  } finally {
     loading.value = false
-  }
-}
-
-const savePlan = async () => {
-  formError.value = ''
-  formSuccess.value = ''
-  formLoading.value = true
-
-  try {
-    if (editingPlanId.value) {
-      await apiFetch(`/api/MembershipPlan/${editingPlanId.value}`, {
-        method: 'PUT',
-        body: {
-          name: formData.value.name,
-          maxBorrowLimit: formData.value.maxBorrowLimit,
-          price: formData.value.price,
-          durationInDays: formData.value.durationInDays
-        }
-      })
-      formSuccess.value = 'Üyelik planı başarıyla güncellendi.'
-    } else {
-      await apiFetch('/api/MembershipPlan', {
-        method: 'POST',
-        body: {
-          name: formData.value.name,
-          maxBorrowLimit: formData.value.maxBorrowLimit,
-          price: formData.value.price,
-          durationInDays: formData.value.durationInDays
-        }
-      })
-      formSuccess.value = 'Üyelik planı başarıyla eklendi.'
-    }
-
-    setTimeout(() => {
-      resetForm()
-    }, 1200)
-
-    await loadPlans()
-  }
-  catch (error: any) {
-    formError.value = error?.data?.message ?? 'İşlem sırasında bir hata oluştu.'
-  }
-  finally {
-    formLoading.value = false
-  }
-}
-
-const deletePlan = async (plan: MembershipPlan) => {
-  const confirmed = window.confirm(`"${plan.name}" planını silmek istediğinize emin misiniz?`)
-  if (!confirmed) return
-  try {
-    await apiFetch(`/api/MembershipPlan/${plan.id}`, { method: 'DELETE' })
-    await loadPlans()
-  }
-  catch (error: any) {
-    window.alert(error?.data?.message ?? 'Plan silinirken hata oluştu.')
   }
 }
 
@@ -278,35 +374,32 @@ onMounted(async () => {
   await checkAdminAuth()
   await loadPlans()
 })
-
 </script>
 
-
 <style scoped>
-@import "../../../styles/admin.css";
+
 
 .plan-name-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .plan-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .limit-badge {
-  display: inline-block;
-  padding: 3px 9px;
-  background: #f5e6d5;
-  color: #7c4b2c;
-  border-radius: 6px;
+  background: #efe0d0;
+  color: #493122;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
 .price-text {
-  color: #2e7d32;
+  color: #276a2b;
   font-size: 15px;
 }
 </style>

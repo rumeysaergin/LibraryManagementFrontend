@@ -186,5 +186,5 @@ onMounted(async () => {
 
 
 <style scoped>
-@import "../../../../styles/admin.css";
+
 </style>

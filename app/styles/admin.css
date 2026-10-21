@@ -764,6 +764,33 @@
 }
 
 /* =========================================================
+   Modal Genel Stilleri & İpuçları
+========================================================= */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px dashed #e8d9cc;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-row:hover {
+  background-color: #faf2ea !important;
+}
+
+/* =========================================================
    Responsive
 ========================================================= */
 @media (max-width: 1024px) {

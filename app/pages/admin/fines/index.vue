@@ -7,13 +7,33 @@
 
       <header class="page-header">
         <div class="header-content">
-          <span class="page-eyebrow">CEZA VE ÖDEME YÖNETİMİ</span>
-          <h1>Cezalar</h1>
-          <p class="page-desc">Geciken kitap cezalarını görüntüleyin, ödeme durumlarını takip edin ve onaylayın.</p>
+          <span class="page-eyebrow">
+            {{ selectedLibrary ? `SEÇİLİ KÜTÜPHANE: ${selectedLibrary.name}` : 'CEZA VE ÖDEME YÖNETİMİ' }}
+          </span>
+          <h1>{{ selectedLibrary ? `${selectedLibrary.name} Cezaları` : 'Cezalar' }}</h1>
+          <p class="page-desc">
+            {{
+              selectedLibrary
+                ? `Yalnızca ${selectedLibrary.name} bünyesindeki ödünçlerden kaynaklanan cezalar görüntüleniyor.`
+                : 'Geciken kitap cezalarını görüntüleyin, satıra basarak ceza detay sayfasına gidin ve ödemeleri onaylayın.'
+            }}
+          </p>
         </div>
-        <div class="header-icon" aria-hidden="true">⚠️</div>
+        <div style="display: flex; align-items: center; gap: 16px; z-index: 1;">
+          <button class="add-button" @click="openAddModal">
+            + Yeni Ceza Tanımla
+          </button>
+          <div class="header-icon" aria-hidden="true">⚠️</div>
+        </div>
       </header>
 
+      <!-- Seçili Kütüphane Bilgi Şeridi -->
+      <div v-if="selectedLibrary" class="active-lib-filter-pill">
+        <span>🏛️ Sol menüden seçilen kütüphaneye filtrelendi: <strong>{{ selectedLibrary.name }}</strong></span>
+        <button type="button" class="clear-filter-mini-btn" @click="setLibraryId('')">
+          ✕ Filtreyi Kaldır (Tüm Kütüphaneler)
+        </button>
+      </div>
 
       <!-- İstatistikler -->
       <div v-if="!loading && !loadError" class="stats-row">
@@ -47,12 +67,11 @@
         </div>
       </div>
 
-
       <!-- Filtre -->
       <div class="filters-row">
         <div class="search-bar">
           <span class="search-icon">⌕</span>
-          <input v-model="searchQuery" type="text" placeholder="Ceza ara..." />
+          <input v-model="searchQuery" type="text" placeholder="Ceza ID veya Ödünç ID ile ara..." />
         </div>
         <select v-model="paymentFilter" class="filter-select">
           <option value="">Tüm Cezalar</option>
@@ -60,7 +79,6 @@
           <option value="paid">Ödenmiş</option>
         </select>
       </div>
-
 
       <!-- Yükleniyor -->
       <div v-if="loading" class="state-card">
@@ -77,12 +95,13 @@
       <!-- Tablo -->
       <div v-else class="table-wrapper">
         <div class="table-header-row">
-          <span class="result-count">{{ filteredFines.length }} ceza kaydı</span>
+          <span class="result-count">{{ filteredFines.length }} ceza kaydı (Detay için satıra veya butona tıklayın)</span>
         </div>
 
         <table class="data-table">
           <thead>
             <tr>
+              <th>Ceza ID</th>
               <th>Ödünç ID</th>
               <th>Tutar</th>
               <th>Ceza Tarihi</th>
@@ -93,12 +112,20 @@
 
           <tbody>
             <tr v-if="filteredFines.length === 0">
-              <td colspan="5" class="empty-row">Ceza kaydı bulunamadı.</td>
+              <td colspan="6" class="empty-row">Ceza kaydı bulunamadı.</td>
             </tr>
 
-            <tr v-for="fine in filteredFines" :key="fine.id">
+            <tr
+              v-for="fine in filteredFines"
+              :key="fine.id"
+              class="clickable-row"
+              @click="goToDetail(fine.id)"
+            >
               <td>
-                <code class="id-code">{{ fine.loanId.slice(0, 8) }}...</code>
+                <code class="id-code" :title="fine.id">{{ fine.id.slice(0, 8) }}...</code>
+              </td>
+              <td>
+                <code class="id-code" :title="fine.loanId">{{ fine.loanId ? fine.loanId.slice(0, 8) + '...' : '—' }}</code>
               </td>
               <td>
                 <strong :class="fine.isPaid ? 'amount-paid' : 'amount-unpaid'">
@@ -110,17 +137,20 @@
                 <span v-if="fine.isPaid" class="paid-badge">✓ Ödendi</span>
                 <span v-else class="unpaid-badge">⚠️ Ödenmedi</span>
               </td>
-              <td>
+              <td @click.stop>
                 <div class="action-buttons">
+                  <NuxtLink :to="`/admin/fines/${fine.id}`" class="edit-btn">
+                    🔍 Detay
+                  </NuxtLink>
                   <button
                     v-if="!fine.isPaid"
                     class="pay-btn"
                     :disabled="markingPaid === fine.id"
-                    @click="markAsPaid(fine)"
+                    @click.stop="openPayModal(fine)"
                   >
-                    {{ markingPaid === fine.id ? 'İşleniyor...' : '✓ Ödendi İşaretle' }}
+                    ✓ Ödendi Yap
                   </button>
-                  <button class="delete-btn" @click="deleteFine(fine)">
+                  <button class="delete-btn" @click.stop="openDeleteModal(fine)">
                     🗑️ Sil
                   </button>
                 </div>
@@ -130,14 +160,107 @@
         </table>
       </div>
 
+      <!-- ==============================================
+           MODALLAR
+           ============================================== -->
+      <!-- 1. Yeni Ceza Modalı -->
+      <AdminModal
+        v-model="showAddModal"
+        title="Yeni Ceza Kaydı Ekle"
+        subtitle="Bir ödünç işlemine bağlı ceza kaydı oluşturun."
+        icon="⚠️"
+      >
+        <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+        <form class="modal-form" @submit.prevent="createFine">
+          <div class="form-group">
+            <label>Ödünç Seçin (Loan ID)</label>
+            <select v-model="newFine.loanId" required>
+              <option value="">Ödünç Seçin</option>
+              <option v-for="loan in loans" :key="loan.id" :value="loan.id">
+                {{ loan.id.slice(0, 8) }} - {{ loan.bookTitle || 'Kitap' }} ({{ loan.userName || 'Kullanıcı' }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Ceza Tutarı (₺)</label>
+            <input
+              v-model.number="newFine.amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="Örn: 25.00"
+              required
+            />
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showAddModal = false">İptal</button>
+            <button type="submit" class="submit-btn" :disabled="modalLoading">
+              {{ modalLoading ? 'Ekleniyor...' : 'Cezayı Kaydet' }}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <!-- 2. Ödeme Onay Modalı -->
+      <AdminModal
+        v-model="showPayModal"
+        title="Ödeme Onayı"
+        subtitle="Ceza kaydını ödendi durumuna geçirmek üzeresiniz."
+        icon="💳"
+      >
+        <div class="modal-form">
+          <p v-if="selectedFine">
+            <strong>{{ Number(selectedFine.amount).toFixed(2) }} ₺</strong> tutarındaki cezanın ödendiğini onaylıyor musunuz?
+          </p>
+          <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showPayModal = false">Vazgeç</button>
+            <button
+              type="button"
+              class="submit-btn"
+              :disabled="modalLoading"
+              @click="confirmMarkAsPaid"
+            >
+              {{ modalLoading ? 'İşleniyor...' : '✓ Ödendi Olarak Kaydet' }}
+            </button>
+          </div>
+        </div>
+      </AdminModal>
+
+      <!-- 3. Ceza Silme Modalı -->
+      <AdminModal
+        v-model="showDeleteModal"
+        title="Cezayı Sil"
+        subtitle="Bu ceza kaydını kalıcı olarak silmek istediğinizden emin misiniz?"
+        icon="🗑️"
+      >
+        <div class="modal-form">
+          <p v-if="selectedFine" style="color: #b93828;">
+            ⚠️ <strong>{{ Number(selectedFine.amount).toFixed(2) }} ₺</strong> tutarındaki ceza kaydı silinecektir.
+          </p>
+          <div v-if="modalError" class="msg error">⚠️ {{ modalError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="cancel-btn" @click="showDeleteModal = false">İptal</button>
+            <button
+              type="button"
+              class="delete-btn"
+              :disabled="modalLoading"
+              @click="confirmDeleteFine"
+            >
+              {{ modalLoading ? 'Siliniyor...' : 'Evet, Sil' }}
+            </button>
+          </div>
+        </div>
+      </AdminModal>
+
     </main>
 
   </div>
 </template>
 
-
 <script setup lang="ts">
-
 interface Fine {
   id: string
   loanId: string
@@ -146,83 +269,220 @@ interface Fine {
   isPaid: boolean
 }
 
+interface Loan {
+  id: string
+  userId: string
+  libraryBookId: string
+  libraryId?: string
+  bookTitle?: string
+  userName?: string
+}
+
+const router = useRouter()
 const { checkAdminAuth } = useAdminAuth()
 const { apiFetch } = useApi()
+const { selectedLibraryId, selectedLibrary, setLibraryId } = useAdminLibrary()
 
 const fines = ref<Fine[]>([])
+const loans = ref<Loan[]>([])
 const loading = ref(true)
 const loadError = ref('')
 const searchQuery = ref('')
 const paymentFilter = ref('')
 const markingPaid = ref<string | null>(null)
 
-const unpaidFines = computed(() => fines.value.filter(f => !f.isPaid))
-const paidFines = computed(() => fines.value.filter(f => f.isPaid))
-const totalAmount = computed(() => fines.value.reduce((sum, f) => sum + Number(f.amount), 0))
-const unpaidAmount = computed(() => unpaidFines.value.reduce((sum, f) => sum + Number(f.amount), 0))
+// Modal durumları
+const showAddModal = ref(false)
+const showPayModal = ref(false)
+const showDeleteModal = ref(false)
+const selectedFine = ref<Fine | null>(null)
+const modalLoading = ref(false)
+const modalError = ref('')
 
-const formatDate = (date: string) => {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('tr-TR')
-}
+const newFine = ref({
+  loanId: '',
+  amount: 0
+})
+
+// Sol menüden kütüphane seçilmişse o kütüphaneye ait ödünçlerin ID'leri
+const scopedLoanIds = computed(() => {
+  if (!selectedLibraryId.value) return null
+  const ids = new Set<string>()
+  loans.value.forEach(l => {
+    if (l.libraryId === selectedLibraryId.value) {
+      ids.add(l.id)
+    }
+  })
+  return ids
+})
+
+// Sol menüden kütüphane seçilmişse cezaları o kütüphaneye filtrele
+const scopedFines = computed(() => {
+  if (!scopedLoanIds.value) return fines.value
+  return fines.value.filter(f => scopedLoanIds.value!.has(f.loanId))
+})
+
+const unpaidFines = computed(() => scopedFines.value.filter(f => !f.isPaid))
+const paidFines = computed(() => scopedFines.value.filter(f => f.isPaid))
+
+const totalAmount = computed(() =>
+  scopedFines.value.reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
+)
+
+const unpaidAmount = computed(() =>
+  unpaidFines.value.reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
+)
 
 const filteredFines = computed(() => {
-  return fines.value.filter(fine => {
-    const q = searchQuery.value.toLowerCase().trim()
-    const matchSearch = !q || fine.loanId.toLowerCase().includes(q)
-    let matchPay = true
-    if (paymentFilter.value === 'paid') matchPay = fine.isPaid
-    if (paymentFilter.value === 'unpaid') matchPay = !fine.isPaid
-    return matchSearch && matchPay
-  })
+  const q = searchQuery.value.toLowerCase().trim()
+  return scopedFines.value
+    .filter(f => {
+      const matchSearch =
+        !q ||
+        f.id.toLowerCase().includes(q) ||
+        (f.loanId && f.loanId.toLowerCase().includes(q))
+      const matchPayment =
+        !paymentFilter.value ||
+        (paymentFilter.value === 'paid' && f.isPaid) ||
+        (paymentFilter.value === 'unpaid' && !f.isPaid)
+      return matchSearch && matchPayment
+    })
+    .sort((a, b) => new Date(b.fineDate).getTime() - new Date(a.fineDate).getTime())
 })
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('tr-TR')
+}
+
+// Satıra basınca detay sayfasına yönlendirme (3. İstek)
+const goToDetail = (fineId: string) => {
+  router.push(`/admin/fines/${fineId}`)
+}
+
+const openAddModal = () => {
+  newFine.value = { loanId: '', amount: 0 }
+  modalError.value = ''
+  showAddModal.value = true
+}
+
+const openPayModal = (fine: Fine) => {
+  selectedFine.value = fine
+  modalError.value = ''
+  showPayModal.value = true
+}
+
+const openDeleteModal = (fine: Fine) => {
+  selectedFine.value = fine
+  modalError.value = ''
+  showDeleteModal.value = true
+}
+
+const createFine = async () => {
+  if (!newFine.value.loanId || newFine.value.amount <= 0) {
+    modalError.value = 'Lütfen geçerli bir ödünç ve tutar seçin.'
+    return
+  }
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch('/api/Fine', {
+      method: 'POST',
+      body: {
+        loanId: newFine.value.loanId,
+        amount: newFine.value.amount
+      }
+    })
+    showAddModal.value = false
+    await loadData()
+  } catch (error: any) {
+    console.error('Ceza ekleme hatası:', error)
+    modalError.value = error?.data?.message || 'Ceza oluşturulurken bir hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+const confirmMarkAsPaid = async () => {
+  if (!selectedFine.value) return
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/Fine/${selectedFine.value.id}`, {
+      method: 'PUT',
+      body: {
+        loanId: selectedFine.value.loanId,
+        amount: selectedFine.value.amount,
+        fineDate: selectedFine.value.fineDate,
+        isPaid: true
+      }
+    })
+    selectedFine.value.isPaid = true
+    showPayModal.value = false
+  } catch (error) {
+    console.error('Ödeme onaylama hatası:', error)
+    modalError.value = 'Ödeme durumu güncellenirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+const confirmDeleteFine = async () => {
+  if (!selectedFine.value) return
+  modalLoading.value = true
+  modalError.value = ''
+  try {
+    await apiFetch(`/api/Fine/${selectedFine.value.id}`, {
+      method: 'DELETE'
+    })
+    fines.value = fines.value.filter(f => f.id !== selectedFine.value!.id)
+    showDeleteModal.value = false
+  } catch (error) {
+    console.error('Ceza silme hatası:', error)
+    modalError.value = 'Ceza kaydı silinirken hata oluştu.'
+  } finally {
+    modalLoading.value = false
+  }
+}
 
 const loadData = async () => {
   loading.value = true
   loadError.value = ''
   try {
-    const data = await apiFetch<Fine[]>('/api/Fine')
-    fines.value = Array.isArray(data) ? data : []
-  }
-  catch {
-    loadError.value = 'Cezalar yüklenirken hata oluştu.'
-  }
-  finally {
+    const [finesRes, loansRes, booksRes, usersRes, lbsRes] = await Promise.allSettled([
+      apiFetch<Fine[]>('/api/Fine'),
+      apiFetch<Loan[]>('/api/Loan'),
+      apiFetch<any[]>('/api/Book'),
+      apiFetch<any[]>('/api/User'),
+      apiFetch<any[]>('/api/LibraryBook')
+    ])
+
+    if (finesRes.status === 'fulfilled' && Array.isArray(finesRes.value)) {
+      fines.value = finesRes.value
+    }
+
+    if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value)) {
+      const booksMap = new Map((booksRes.status === 'fulfilled' && Array.isArray(booksRes.value)) ? booksRes.value.map(b => [b.id, b.title]) : [])
+      const usersMap = new Map((usersRes.status === 'fulfilled' && Array.isArray(usersRes.value)) ? usersRes.value.map(u => [u.id, `${u.firstName} ${u.lastName}`]) : [])
+      const lbMap = new Map((lbsRes.status === 'fulfilled' && Array.isArray(lbsRes.value)) ? lbsRes.value.map(lb => [lb.id, lb]) : [])
+
+      loans.value = loansRes.value.map(l => {
+        const lb = lbMap.get(l.libraryBookId)
+        return {
+          ...l,
+          libraryId: lb?.libraryId,
+          bookTitle: lb?.bookId ? booksMap.get(lb.bookId) : 'Kitap',
+          userName: usersMap.get(l.userId) || 'Kullanıcı'
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Cezalar yüklenirken hata:', error)
+    loadError.value = 'Ceza verileri yüklenirken bir hata oluştu.'
+  } finally {
     loading.value = false
-  }
-}
-
-const markAsPaid = async (fine: Fine) => {
-  markingPaid.value = fine.id
-  try {
-    await apiFetch(`/api/Fine/${fine.id}`, {
-      method: 'PUT',
-      body: {
-        loanId: fine.loanId,
-        amount: fine.amount,
-        fineDate: fine.fineDate,
-        isPaid: true
-      }
-    })
-    await loadData()
-  }
-  catch (error: any) {
-    window.alert(error?.data?.message ?? 'Ceza ödeme işlemi sırasında hata oluştu.')
-  }
-  finally {
-    markingPaid.value = null
-  }
-}
-
-const deleteFine = async (fine: Fine) => {
-  const confirmed = window.confirm('Bu ceza kaydını silmek istediğinize emin misiniz?')
-  if (!confirmed) return
-  try {
-    await apiFetch(`/api/Fine/${fine.id}`, { method: 'DELETE' })
-    await loadData()
-  }
-  catch (error: any) {
-    window.alert(error?.data?.message ?? 'Ceza silinirken hata oluştu.')
   }
 }
 
@@ -230,115 +490,193 @@ onMounted(async () => {
   await checkAdminAuth()
   await loadData()
 })
-
 </script>
 
-
 <style scoped>
-@import "../../../styles/admin.css";
+
+
+.active-lib-filter-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fbf3e9;
+  border: 1px solid #e7d5c3;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #493122;
+  margin-bottom: 20px;
+}
+
+.clear-filter-mini-btn {
+  background: #fff;
+  border: 1px solid #dcc2a7;
+  color: #8c5734;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-filter-mini-btn:hover {
+  background: #8c5734;
+  color: #fff;
+}
 
 .stats-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  flex-wrap: wrap;
   margin-bottom: 24px;
 }
 
 .stat-pill {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  background: rgba(255, 250, 244, 0.96);
-  border: 1px solid #dfc8b2;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(92, 57, 34, 0.07);
+  gap: 14px;
+  padding: 16px 20px;
+  background: #fffdfa;
+  border: 1px solid #e7d5c3;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(90, 59, 36, 0.04);
 }
 
-.unpaid-total {
-  border-color: #e5c3b9;
+.stat-pill.unpaid-total {
+  background: #fff9f7;
+  border-color: #f0c9bf;
 }
 
 .pill-icon {
-  font-size: 22px;
-}
-
-.stat-pill > div {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .pill-label {
-  color: #765b48;
+  display: block;
   font-size: 12px;
-  font-weight: 600;
+  color: #8c735d;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .stat-pill strong {
-  color: #4b3021;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.filters-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.filter-select {
-  padding: 12px 14px;
-  background: rgba(255, 250, 244, 0.96);
-  border: 1px solid #dfc8b2;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #3f2b20;
-  outline: none;
+  display: block;
+  font-size: 20px;
+  color: #493122;
+  margin-top: 2px;
 }
 
 .id-code {
   font-family: monospace;
   font-size: 12px;
-  background: #f5e6d5;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #7c4b2c;
+  background: #f0e1d2;
+  color: #5d3f2a;
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
 .amount-paid {
-  color: #2e7d32;
+  color: #276a2b;
+  font-size: 15px;
 }
 
 .amount-unpaid {
   color: #a84d3d;
+  font-size: 15px;
+}
+
+.paid-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #eef8ee;
+  color: #276a2b;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #c6e6c6;
+}
+
+.unpaid-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #fff3f0;
+  color: #a84d3d;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #f2c7bd;
 }
 
 .pay-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
   padding: 6px 12px;
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-  border-radius: 7px;
-  font-family: inherit;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
+  transition: all 0.2s;
 }
 
 .pay-btn:hover:not(:disabled) {
-  background: #c8e6c9;
+  background: #256628;
 }
 
-.pay-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-row:hover {
+  background-color: #faf2ea !important;
+}
+
+@media (max-width: 900px) {
+  .active-lib-filter-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fbf3e9;
+  border: 1px solid #e7d5c3;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #493122;
+  margin-bottom: 20px;
+}
+
+.clear-filter-mini-btn {
+  background: #fff;
+  border: 1px solid #dcc2a7;
+  color: #8c5734;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-filter-mini-btn:hover {
+  background: #8c5734;
+  color: #fff;
+}
+
+.stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

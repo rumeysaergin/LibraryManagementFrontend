@@ -6,15 +6,29 @@
       <!-- Sayfa başlığı -->
       <header class="page-header">
         <div class="header-content">
-          <span class="page-eyebrow">ÖDÜNÇ YÖNETİMİ</span>
-          <h1>Ödünç İşlemleri</h1>
+          <span class="page-eyebrow">
+            {{ selectedLibrary ? `SEÇİLİ KÜTÜPHANE: ${selectedLibrary.name}` : 'ÖDÜNÇ YÖNETİMİ' }}
+          </span>
+          <h1>{{ selectedLibrary ? `${selectedLibrary.name} Ödünçleri` : 'Ödünç İşlemleri' }}</h1>
           <p class="page-desc">
-            Tüm kütüphanelerdeki ödünç kayıtlarını, iade sürelerini ve gecikmeleri takip edin.
+            {{
+              selectedLibrary
+                ? `Yalnızca ${selectedLibrary.name} bünyesindeki kitaplara ait ödünç kayıtları görüntüleniyor.`
+                : 'Tüm kütüphanelerdeki ödünç kayıtlarını, iade sürelerini ve gecikmeleri takip edin.'
+            }}
           </p>
         </div>
 
         <div class="header-icon" aria-hidden="true">📖</div>
       </header>
+
+      <!-- Seçili Kütüphane Bilgi Şeridi -->
+      <div v-if="selectedLibrary" class="active-lib-filter-pill">
+        <span>🏛️ Sol menüden seçilen kütüphaneye filtrelendi: <strong>{{ selectedLibrary.name }}</strong></span>
+        <button type="button" class="clear-filter-mini-btn" @click="setLibraryId('')">
+          ✕ Filtreyi Kaldır (Tüm Kütüphaneler)
+        </button>
+      </div>
 
       <!-- İstatistikler -->
       <div v-if="!loading && !loadError" class="stats-row">
@@ -177,6 +191,7 @@ interface Loan {
   dueDate: string
   returnDate: string | null
   status: string
+  libraryId?: string
   bookTitle?: string
   libraryName?: string
 }
@@ -199,6 +214,7 @@ interface Library {
 
 const { checkAdminAuth } = useAdminAuth()
 const { apiFetch } = useApi()
+const { selectedLibraryId, selectedLibrary, setLibraryId } = useAdminLibrary()
 
 const loans = ref<Loan[]>([])
 const loading = ref(true)
@@ -206,21 +222,27 @@ const loadError = ref('')
 const searchQuery = ref('')
 const statusFilter = ref('')
 
+// Sol menüden kütüphane seçildiyse kütüphaneye göre filtreli liste
+const scopedLoans = computed(() => {
+  if (!selectedLibraryId.value) return loans.value
+  return loans.value.filter(loan => loan.libraryId === selectedLibraryId.value)
+})
+
 // Aktif ödünç istatistiği
 const activeLoans = computed(() =>
-  loans.value.filter(
+  scopedLoans.value.filter(
     loan => !loan.returnDate && !isOverdue(loan)
   )
 )
 
 // İade edilmiş ödünç istatistiği
 const returnedLoans = computed(() =>
-  loans.value.filter(loan => !!loan.returnDate)
+  scopedLoans.value.filter(loan => !!loan.returnDate)
 )
 
 // Geciken ödünç istatistiği
 const overdueLoans = computed(() =>
-  loans.value.filter(loan => isOverdue(loan))
+  scopedLoans.value.filter(loan => isOverdue(loan))
 )
 
 // Ödünç süresinin geçip geçmediğini kontrol et
@@ -257,7 +279,7 @@ const formatDate = (date: string | null) => {
 const filteredLoans = computed(() => {
   const q = searchQuery.value.toLowerCase().trim()
 
-  return loans.value
+  return scopedLoans.value
     .filter(loan => {
       const matchSearch =
         !q ||
@@ -355,6 +377,7 @@ const loadData = async () => {
 
       return {
         ...loan,
+        libraryId: libraryBook?.libraryId,
         bookTitle: book?.title ?? '—',
         libraryName: library?.name ?? '—'
       }
@@ -379,7 +402,38 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import "../../../styles/admin.css";
+
+
+.active-lib-filter-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fbf3e9;
+  border: 1px solid #e7d5c3;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #493122;
+  margin-bottom: 20px;
+}
+
+.clear-filter-mini-btn {
+  background: #fff;
+  border: 1px solid #dcc2a7;
+  color: #8c5734;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-filter-mini-btn:hover {
+  background: #8c5734;
+  color: #fff;
+}
 
 .stats-row {
   display: flex;
