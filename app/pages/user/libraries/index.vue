@@ -2,26 +2,28 @@
 <template>
   <main class="libraries-page">
     <div class="libraries-container">
-      <!-- HEADER -->
-      <header class="page-header">
-        <NuxtLink to="/user" class="back-button">
-          <span class="back-arrow">←</span>
-          Kullanıcı Paneline Dön
-        </NuxtLink>
+     
+<!-- HEADER -->
+<NuxtLink to="/user" class="back-button">
+  <span class="back-arrow">←</span>
+  Kullanıcı Paneline Dön
+</NuxtLink>
 
-        <div class="header-content">
-          <div class="header-icon" aria-hidden="true">📚</div>
+<header class="page-header">
+  <div class="header-content">
+    <div class="header-text">
+      <span class="eyebrow">KÜTÜPHANE YÖNETİMİ</span>
+      <h1>Kütüphanelerim</h1>
+      <p>
+        Üyesi olduğunuz kütüphaneleri görüntüleyin ve
+        yeni kütüphaneleri keşfedin.
+      </p>
+    </div>
+  </div>
 
-          <div class="header-text">
-            <span class="eyebrow">KÜTÜPHANE YÖNETİMİ</span>
-            <h1>Kütüphanelerim</h1>
-            <p>
-              Üyesi olduğunuz kütüphaneleri görüntüleyin ve
-              yeni kütüphaneleri keşfedin.
-            </p>
-          </div>
-        </div>
-      </header>
+  <div class="header-icon" aria-hidden="true">📚</div>
+</header>
+
 
       <!-- STATS -->
       <section
@@ -607,60 +609,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 /* SAYFA */
 .libraries-page {
-  position: relative;
   min-height: 100vh;
-  overflow: hidden;
   padding: 32px 20px 60px;
   background: #f6f0e7;
   color: #46372d;
 }
 
 .libraries-container {
-  position: relative;
-  z-index: 1;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
 }
 
-/* BAŞLIK ALANI */
+/* BAŞLIK KARTI — CEZALARIM SAYFASIYLA AYNI DÜZEN */
 .page-header {
-  position: relative;
-  margin-bottom: 32px;
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 20px;
-  padding: 8px 0;
-  color: #785b46;
-  background: transparent;
-  border: none;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.back-button:hover {
-  color: #4c3527;
-  transform: translateX(-3px);
-}
-
-.back-arrow {
-  font-size: 17px;
-}
-
-/* ÖNCEKİ SAYFALARLA UYUMLU KREM DEGRADE BAŞLIK */
-.header-content {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 24px;
+  margin-bottom: 30px;
   padding: 30px 34px;
   overflow: hidden;
   background: linear-gradient(
@@ -674,7 +645,7 @@ onMounted(() => {
   box-shadow: 0 7px 22px rgba(90, 59, 36, 0.055);
 }
 
-.header-content::after {
+.page-header::after {
   position: absolute;
   top: -65px;
   right: -35px;
@@ -686,24 +657,44 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.header-icon {
+
+/* GERİ DÖNÜŞ BAĞLANTISI */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 8px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #785b46;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+  color: #a85d2d;
+  background: transparent;
+  transform: translateX(-3px);
+}
+
+.back-arrow {
+  font-size: 17px;
+}
+
+/* ÖNCEKİ SAYFALARLA UYUMLU KREM DEGRADE BAŞLIK */
+/* Kartın içindeki metin alanı */
+.header-content {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 76px;
-  height: 76px;
-  flex-shrink: 0;
-  background: #efe0d0;
-  border: 1px solid #e2c9b1;
-  border-radius: 15px;
-  font-size: 35px;
+  flex: 1;
+  min-width: 0;
 }
 
 .header-text {
-  position: relative;
-  z-index: 1;
   min-width: 0;
 }
 
@@ -717,7 +708,7 @@ onMounted(() => {
   letter-spacing: 1.3px;
 }
 
-.header-content h1 {
+.page-header h1 {
   margin: 0 0 10px;
   color: #493122;
   font-size: 32px;
@@ -726,7 +717,7 @@ onMounted(() => {
   line-height: 1.25;
 }
 
-.header-content p {
+.page-header p {
   max-width: 680px;
   margin: 0;
   color: #816b58;
@@ -734,12 +725,29 @@ onMounted(() => {
   line-height: 1.7;
 }
 
+/* Kitap ikonu */
+.header-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  background: #efe0d0;
+  border: 1px solid #e2c9b1;
+  border-radius: 15px;
+  font-size: 35px;
+}
+
+
 /* İSTATİSTİKLER */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  margin: 24px 0 48px;
+  margin: 0 0 48px;
 }
 
 .stat-card {
@@ -1697,5 +1705,37 @@ a:focus-visible {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+
+
+
+@media (max-width: 600px) {
+  .libraries-page {
+    padding: 24px 14px 40px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    gap: 16px;
+    padding: 23px 20px;
+    border-radius: 17px;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 27px;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+  }
+}
+
+
 }
 </style>

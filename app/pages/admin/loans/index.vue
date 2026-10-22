@@ -1,183 +1,193 @@
+
 <template>
   <div class="admin-layout">
     <AdminSidebar />
 
     <main class="admin-main">
-      <!-- Sayfa başlığı -->
       <header class="page-header">
-        <div class="header-content">
-          <span class="page-eyebrow">
-            {{ selectedLibrary ? `SEÇİLİ KÜTÜPHANE: ${selectedLibrary.name}` : 'ÖDÜNÇ YÖNETİMİ' }}
-          </span>
-          <h1>{{ selectedLibrary ? `${selectedLibrary.name} Ödünçleri` : 'Ödünç İşlemleri' }}</h1>
-          <p class="page-desc">
-            {{
-              selectedLibrary
-                ? `Yalnızca ${selectedLibrary.name} bünyesindeki kitaplara ait ödünç kayıtları görüntüleniyor.`
-                : 'Tüm kütüphanelerdeki ödünç kayıtlarını, iade sürelerini ve gecikmeleri takip edin.'
-            }}
+        <div>
+          <p class="eyebrow">YÖNETİM PANELİ</p>
+          <h1>📚 Ödünç İşlemleri</h1>
+          <p class="page-description">
+            Ödünç kayıtlarını, kullanıcıları ve iade durumlarını görüntüleyin.
           </p>
         </div>
 
-        <div class="header-icon" aria-hidden="true">📖</div>
+        <button class="refresh-btn" :disabled="loading" @click="loadData">
+          {{ loading ? 'Yükleniyor...' : '↻ Yenile' }}
+        </button>
       </header>
 
-      <!-- Seçili Kütüphane Bilgi Şeridi -->
-      <div v-if="selectedLibrary" class="active-lib-filter-pill">
-        <span>🏛️ Sol menüden seçilen kütüphaneye filtrelendi: <strong>{{ selectedLibrary.name }}</strong></span>
-        <button type="button" class="clear-filter-mini-btn" @click="setLibraryId('')">
-          ✕ Filtreyi Kaldır (Tüm Kütüphaneler)
-        </button>
+      <div v-if="loadError" class="message error-message">
+        {{ loadError }}
+        <button @click="loadData">Tekrar dene</button>
       </div>
 
-      <!-- İstatistikler -->
-      <div v-if="!loading && !loadError" class="stats-row">
-        <div class="stat-pill">
-          <span class="pill-icon">📖</span>
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-icon">📋</span>
           <div>
-            <span class="pill-label">Aktif Ödünç</span>
-            <strong>{{ activeLoans.length }}</strong>
+            <p>Toplam ödünç</p>
+            <strong>{{ loans.length }}</strong>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">📖</span>
+          <div>
+            <p>Aktif ödünç</p>
+            <strong>{{ activeCount }}</strong>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">⏰</span>
+          <div>
+            <p>Gecikmiş</p>
+            <strong>{{ overdueCount }}</strong>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">✓</span>
+          <div>
+            <p>İade edilmiş</p>
+            <strong>{{ returnedCount }}</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="filter-card">
+        <div class="filter-heading">
+          <div>
+            <h2>Ödünç Kayıtları</h2>
+            <p>Bir kaydın ayrıntılarını görmek için satıra tıklayın.</p>
+          </div>
+          <span class="record-count">{{ filteredLoans.length }} kayıt</span>
+        </div>
+
+        <div class="filters">
+          <div class="field search-field">
+            <label for="loan-search">Arama</label>
+            <input
+              id="loan-search"
+              v-model="searchText"
+              type="text"
+              placeholder="Kullanıcı adı, e-posta, kitap veya ID ara..."
+            />
+          </div>
+
+          <div class="field">
+            <label for="status-filter">Ödünç durumu</label>
+            <select id="status-filter" v-model="statusFilter">
+              <option value="all">Tüm durumlar</option>
+              <option value="active">Aktif</option>
+              <option value="overdue">Gecikmiş</option>
+              <option value="returned">İade edildi</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="library-filter">Kütüphane</label>
+            <select id="library-filter" v-model="libraryFilter">
+              <option value="all">Tüm kütüphaneler</option>
+              <option
+                v-for="library in libraries"
+                :key="library.id"
+                :value="library.id"
+              >
+                {{ library.name }}
+              </option>
+            </select>
           </div>
         </div>
+      </section>
 
-        <div class="stat-pill">
-          <span class="pill-icon">✓</span>
-          <div>
-            <span class="pill-label">İade Edilmiş</span>
-            <strong>{{ returnedLoans.length }}</strong>
-          </div>
-        </div>
-
-        <div class="stat-pill overdue-pill">
-          <span class="pill-icon">⚠️</span>
-          <div>
-            <span class="pill-label">Geciken</span>
-            <strong>{{ overdueLoans.length }}</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filtreler -->
-      <div class="filters-row">
-        <div class="search-bar">
-          <span class="search-icon">⌕</span>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Kullanıcı ID veya kitap adı ile ara..."
-          />
-        </div>
-
-        <select v-model="statusFilter" class="filter-select">
-          <option value="">Tüm Durumlar</option>
-          <option value="active">Aktif</option>
-          <option value="returned">İade Edildi</option>
-          <option value="overdue">Geciken</option>
-        </select>
-      </div>
-
-      <!-- Yükleniyor -->
-      <div v-if="loading" class="state-card">
-        <div class="loader"></div>
+      <section v-if="loading" class="state-card">
+        <span class="loading-spinner"></span>
         <p>Ödünç kayıtları yükleniyor...</p>
-      </div>
+      </section>
 
-      <!-- Hata -->
-      <div v-else-if="loadError" class="state-card error-state">
-        <p>{{ loadError }}</p>
-        <button class="retry-btn" @click="loadData">
-          Tekrar Dene
-        </button>
-      </div>
+      <section v-else-if="!filteredLoans.length" class="state-card">
+        <span class="empty-icon">📭</span>
+        <h3>Kayıt bulunamadı</h3>
+        <p>Arama kelimesini veya filtreleri değiştirmeyi deneyin.</p>
+      </section>
 
-      <!-- Ödünç kayıtları tablosu -->
-      <div v-else class="table-wrapper">
-        <div class="table-header-row">
-          <span class="result-count">
-            {{ filteredLoans.length }} kayıt
-          </span>
+      <section v-else class="table-card">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Kullanıcı</th>
+                <th>Kitap</th>
+                <th>Kütüphane</th>
+                <th>Ödünç tarihi</th>
+                <th>Son iade tarihi</th>
+                <th>İade tarihi</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
 
-          <span class="sort-info">
-            ↓ Ödünç tarihine göre yeniden eskiye
-          </span>
+            <tbody>
+              <tr
+                v-for="loan in filteredLoans"
+                :key="loan.id"
+                class="clickable-row"
+                tabindex="0"
+                @click="goToLoanDetail(loan.id)"
+                @keydown.enter="goToLoanDetail(loan.id)"
+              >
+                <td>
+                  <div class="user-cell">
+                    <span class="user-avatar">{{ getInitials(loan.userName) }}</span>
+                    <div class="cell-stack">
+                      <strong>{{ loan.userName || 'Kullanıcı bulunamadı' }}</strong>
+                      <small>{{ loan.userEmail || 'E-posta bilgisi yok' }}</small>
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="cell-stack">
+                    <strong>{{ loan.bookTitle || 'Kitap bulunamadı' }}</strong>
+                    <small :title="loan.id">ID: {{ shortId(loan.id) }}</small>
+                  </div>
+                </td>
+
+                <td>{{ loan.libraryName || '—' }}</td>
+                <td>{{ formatDate(loan.borrowDate) }}</td>
+                <td :class="{ 'late-date': isOverdue(loan) }">
+                  {{ formatDate(loan.dueDate) }}
+                </td>
+                <td>
+                  {{ loan.returnDate ? formatDate(loan.returnDate) : 'Henüz iade edilmedi' }}
+                </td>
+
+                <td>
+                  <span class="status-badge" :class="statusClass(loan)">
+                    {{ statusText(loan) }}
+                  </span>
+                </td>
+
+                <td @click.stop>
+                  <NuxtLink
+                    :to="`/admin/loans/${loan.id}`"
+                    class="detail-btn"
+                  >
+                    🔍 Detay
+                  </NuxtLink>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Kullanıcı ID</th>
-              <th>Kitap</th>
-              <th>Kütüphane</th>
-              <th>Ödünç Tarihi</th>
-              <th>Son İade</th>
-              <th>İade Tarihi</th>
-              <th>Durum</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-if="filteredLoans.length === 0">
-              <td colspan="7" class="empty-row">
-                Kayıt bulunamadı.
-              </td>
-            </tr>
-
-            <tr
-              v-for="loan in filteredLoans"
-              :key="loan.id"
-            >
-              <!-- Kullanıcı ID -->
-              <td>
-                <span
-                  class="user-id-cell"
-                  :title="loan.userId"
-                >
-                  {{ loan.userId || '—' }}
-                </span>
-              </td>
-
-              <!-- Kitap -->
-              <td>
-                <div class="loan-book-cell">
-                  <span>📖</span>
-                  <strong>{{ loan.bookTitle }}</strong>
-                </div>
-              </td>
-
-              <!-- Kütüphane -->
-              <td>{{ loan.libraryName }}</td>
-
-              <!-- Ödünç tarihi -->
-              <td>{{ formatDate(loan.borrowDate) }}</td>
-
-              <!-- Son iade tarihi -->
-              <td :class="{ 'overdue-date': isOverdue(loan) }">
-                {{ formatDate(loan.dueDate) }}
-              </td>
-
-              <!-- İade tarihi -->
-              <td>
-                {{ loan.returnDate ? formatDate(loan.returnDate) : '—' }}
-              </td>
-
-              <!-- Durum -->
-              <td>
-                <span v-if="loan.returnDate" class="returned-badge">
-                  ✓ İade Edildi
-                </span>
-
-                <span v-else-if="isOverdue(loan)" class="overdue-badge">
-                  ⚠️ Gecikiyor
-                </span>
-
-                <span v-else class="active-badge">
-                  📖 Aktif
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <footer class="table-footer">
+          Gösterilen kayıt sayısı: {{ filteredLoans.length }}
+        </footer>
+      </section>
     </main>
   </div>
 </template>
@@ -190,10 +200,29 @@ interface Loan {
   borrowDate: string
   dueDate: string
   returnDate: string | null
-  status: string
-  libraryId?: string
+  status?: string
+  userName?: string
+  userEmail?: string
   bookTitle?: string
+  libraryId?: string
   libraryName?: string
+}
+
+interface User {
+  id: string
+  firstName?: string
+  lastName?: string
+  email?: string
+}
+
+interface Book {
+  id: string
+  title?: string
+}
+
+interface Library {
+  id: string
+  name?: string
 }
 
 interface LibraryBook {
@@ -202,194 +231,180 @@ interface LibraryBook {
   bookId: string
 }
 
-interface Book {
-  id: string
-  title: string
-}
-
-interface Library {
-  id: string
-  name: string
-}
-
 const { checkAdminAuth } = useAdminAuth()
 const { apiFetch } = useApi()
-const { selectedLibraryId, selectedLibrary, setLibraryId } = useAdminLibrary()
 
 const loans = ref<Loan[]>([])
+const libraries = ref<Library[]>([])
 const loading = ref(true)
 const loadError = ref('')
-const searchQuery = ref('')
-const statusFilter = ref('')
+const searchText = ref('')
+const statusFilter = ref('all')
+const libraryFilter = ref('all')
 
-// Sol menüden kütüphane seçildiyse kütüphaneye göre filtreli liste
-const scopedLoans = computed(() => {
-  if (!selectedLibraryId.value) return loans.value
-  return loans.value.filter(loan => loan.libraryId === selectedLibraryId.value)
+const activeCount = computed(
+  () => loans.value.filter(loan => !loan.returnDate && !isOverdue(loan)).length
+)
+
+const overdueCount = computed(
+  () => loans.value.filter(loan => isOverdue(loan)).length
+)
+
+const returnedCount = computed(
+  () => loans.value.filter(loan => !!loan.returnDate).length
+)
+
+const filteredLoans = computed(() => {
+  const query = searchText.value.trim().toLocaleLowerCase('tr-TR')
+
+  return loans.value.filter(loan => {
+    const matchesSearch =
+      !query ||
+      loan.userName?.toLocaleLowerCase('tr-TR').includes(query) ||
+      loan.userEmail?.toLocaleLowerCase('tr-TR').includes(query) ||
+      loan.bookTitle?.toLocaleLowerCase('tr-TR').includes(query) ||
+      loan.libraryName?.toLocaleLowerCase('tr-TR').includes(query) ||
+      loan.id.toLocaleLowerCase('tr-TR').includes(query) ||
+      loan.userId.toLocaleLowerCase('tr-TR').includes(query)
+
+    const matchesLibrary =
+      libraryFilter.value === 'all' ||
+      loan.libraryId === libraryFilter.value
+
+    let matchesStatus = true
+
+    if (statusFilter.value === 'active') {
+      matchesStatus = !loan.returnDate && !isOverdue(loan)
+    } else if (statusFilter.value === 'overdue') {
+      matchesStatus = isOverdue(loan)
+    } else if (statusFilter.value === 'returned') {
+      matchesStatus = !!loan.returnDate
+    }
+
+    return matchesSearch && matchesLibrary && matchesStatus
+  })
 })
 
-// Aktif ödünç istatistiği
-const activeLoans = computed(() =>
-  scopedLoans.value.filter(
-    loan => !loan.returnDate && !isOverdue(loan)
-  )
-)
-
-// İade edilmiş ödünç istatistiği
-const returnedLoans = computed(() =>
-  scopedLoans.value.filter(loan => !!loan.returnDate)
-)
-
-// Geciken ödünç istatistiği
-const overdueLoans = computed(() =>
-  scopedLoans.value.filter(loan => isOverdue(loan))
-)
-
-// Ödünç süresinin geçip geçmediğini kontrol et
-const isOverdue = (loan: Loan) => {
-  if (loan.returnDate) {
-    return false
-  }
+function isOverdue(loan: Loan): boolean {
+  if (loan.returnDate) return false
 
   const dueDate = new Date(loan.dueDate)
-
-  if (Number.isNaN(dueDate.getTime())) {
-    return false
-  }
-
-  return dueDate < new Date()
+  return !Number.isNaN(dueDate.getTime()) && dueDate < new Date()
 }
 
-// Tarih biçimlendirme
-const formatDate = (date: string | null) => {
-  if (!date) {
-    return '—'
-  }
-
-  const parsedDate = new Date(date)
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return '—'
-  }
-
-  return parsedDate.toLocaleDateString('tr-TR')
+function statusText(loan: Loan): string {
+  if (loan.returnDate) return 'İade edildi'
+  if (isOverdue(loan)) return 'Gecikmiş'
+  return 'Aktif'
 }
 
-// Arama, durum filtreleri ve yeniden eskiye sıralama
-const filteredLoans = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
+function statusClass(loan: Loan): string {
+  if (loan.returnDate) return 'status-returned'
+  if (isOverdue(loan)) return 'status-overdue'
+  return 'status-active'
+}
 
-  return scopedLoans.value
-    .filter(loan => {
-      const matchSearch =
-        !q ||
-        (loan.bookTitle ?? '').toLowerCase().includes(q) ||
-        (loan.userId ?? '').toLowerCase().includes(q)
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
 
-      let matchStatus = true
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
 
-      if (statusFilter.value === 'active') {
-        matchStatus = !loan.returnDate && !isOverdue(loan)
-      }
+  return date.toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
 
-      if (statusFilter.value === 'returned') {
-        matchStatus = !!loan.returnDate
-      }
+function shortId(id: string): string {
+  return id ? `${id.slice(0, 8)}...` : '—'
+}
 
-      if (statusFilter.value === 'overdue') {
-        matchStatus = isOverdue(loan)
-      }
+function getInitials(name?: string): string {
+  if (!name || name === 'Kullanıcı bulunamadı') return '?'
 
-      return matchSearch && matchStatus
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.borrowDate).getTime()
-      const dateB = new Date(b.borrowDate).getTime()
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part[0]?.toLocaleUpperCase('tr-TR') || '')
+    .join('')
+}
 
-      // Yeni tarih üstte, eski tarih altta
-      // Geçersiz tarihler listenin sonuna gider
-      if (Number.isNaN(dateA) && Number.isNaN(dateB)) {
-        return 0
-      }
+function goToLoanDetail(loanId: string): void {
+  navigateTo(`/admin/loans/${loanId}`)
+}
 
-      if (Number.isNaN(dateA)) {
-        return 1
-      }
-
-      if (Number.isNaN(dateB)) {
-        return -1
-      }
-
-      return dateB - dateA
-    })
-})
-
-// Ödünç kayıtlarını ve ilgili kitap/kütüphane bilgilerini yükle
-const loadData = async () => {
+async function loadData(): Promise<void> {
   loading.value = true
   loadError.value = ''
 
   try {
-    const [
-      loanData,
-      lbData,
-      bookData,
-      libraryData
-    ] = await Promise.all([
-      apiFetch<Loan[]>('/api/Loan'),
-      apiFetch<LibraryBook[]>('/api/LibraryBook'),
-      apiFetch<Book[]>('/api/Book'),
-      apiFetch<Library[]>('/api/Library')
-    ])
+    const [loanResult, userResult, libraryBookResult, bookResult, libraryResult] =
+      await Promise.allSettled([
+        apiFetch<Loan[]>('/api/Loan'),
+        apiFetch<User[]>('/api/User'),
+        apiFetch<LibraryBook[]>('/api/LibraryBook'),
+        apiFetch<Book[]>('/api/Book'),
+        apiFetch<Library[]>('/api/Library')
+      ])
 
-    const loanList = Array.isArray(loanData)
-      ? loanData
-      : []
+    if (loanResult.status !== 'fulfilled' || !Array.isArray(loanResult.value)) {
+      throw new Error('Ödünç kayıtları alınamadı.')
+    }
 
-    const lbList = Array.isArray(lbData)
-      ? lbData
-      : []
+    const userList =
+      userResult.status === 'fulfilled' && Array.isArray(userResult.value)
+        ? userResult.value
+        : []
 
-    const bookList = Array.isArray(bookData)
-      ? bookData
-      : []
+    const libraryBookList =
+      libraryBookResult.status === 'fulfilled' && Array.isArray(libraryBookResult.value)
+        ? libraryBookResult.value
+        : []
 
-    const libraryList = Array.isArray(libraryData)
-      ? libraryData
-      : []
+    const bookList =
+      bookResult.status === 'fulfilled' && Array.isArray(bookResult.value)
+        ? bookResult.value
+        : []
 
-    loans.value = loanList.map(loan => {
-      const libraryBook = lbList.find(
-        item => item.id === loan.libraryBookId
-      )
+    const libraryList =
+      libraryResult.status === 'fulfilled' && Array.isArray(libraryResult.value)
+        ? libraryResult.value
+        : []
 
-      const book = libraryBook
-        ? bookList.find(
-            item => item.id === libraryBook.bookId
-          )
-        : undefined
+    libraries.value = libraryList
 
+    const usersMap = new Map(userList.map(user => [user.id, user]))
+    const libraryBooksMap = new Map(
+      libraryBookList.map(libraryBook => [libraryBook.id, libraryBook])
+    )
+    const booksMap = new Map(bookList.map(book => [book.id, book]))
+    const librariesMap = new Map(libraryList.map(library => [library.id, library]))
+
+    loans.value = loanResult.value.map(loan => {
+      const user = usersMap.get(loan.userId)
+      const libraryBook = libraryBooksMap.get(loan.libraryBookId)
+      const book = libraryBook ? booksMap.get(libraryBook.bookId) : undefined
       const library = libraryBook
-        ? libraryList.find(
-            item => item.id === libraryBook.libraryId
-          )
+        ? librariesMap.get(libraryBook.libraryId)
         : undefined
+
+      const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
 
       return {
         ...loan,
-        libraryId: libraryBook?.libraryId,
-        bookTitle: book?.title ?? '—',
-        libraryName: library?.name ?? '—'
+        userName: fullName || 'Kullanıcı bulunamadı',
+        userEmail: user?.email || '',
+        bookTitle: book?.title || 'Kitap bulunamadı',
+        libraryId: libraryBook?.libraryId || '',
+        libraryName: library?.name || 'Kütüphane bulunamadı'
       }
     })
   } catch (error) {
-    console.error(
-      'Ödünç kayıtları yüklenemedi:',
-      error
-    )
-
-    loadError.value =
-      'Ödünç kayıtları yüklenirken hata oluştu.'
+    console.error('Ödünç kayıtları yüklenirken hata:', error)
+    loadError.value = 'Ödünç kayıtları yüklenemedi. API bağlantısını kontrol edip tekrar deneyin.'
   } finally {
     loading.value = false
   }
@@ -404,153 +419,421 @@ onMounted(async () => {
 <style scoped>
 
 
-.active-lib-filter-pill {
+.admin-main {
+  min-width: 0;
+  padding: 28px;
+  color: #493122;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: #a16b45;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: #493122;
+  font-size: clamp(23px, 3vw, 30px);
+}
+
+.page-description {
+  margin: 8px 0 0;
+  color: #8a7563;
+  font-size: 14px;
+}
+
+.refresh-btn,
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dec8b3;
+  border-radius: 9px;
+  background: #fffdf9;
+  color: #744b30;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.refresh-btn:hover,
+.detail-btn:hover {
+  background: #f5e9dc;
+}
+
+.refresh-btn:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: #fbf3e9;
-  border: 1px solid #e7d5c3;
-  padding: 10px 16px;
+  gap: 13px;
+  padding: 20px;
+  background: #fffdf9;
+  border: 1px solid #e8d9ca;
+  border-radius: 15px;
+  box-shadow: 0 4px 14px rgba(82, 54, 34, 0.04);
+}
+
+.stat-icon {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  place-items: center;
   border-radius: 12px;
-  font-size: 13px;
+  background: #f4e7d9;
+  font-size: 21px;
+}
+
+.stat-card p {
+  margin: 0 0 5px;
+  color: #8a7563;
+  font-size: 12px;
+}
+
+.stat-card strong {
   color: #493122;
+  font-size: 24px;
+}
+
+.filter-card,
+.table-card,
+.state-card {
+  border: 1px solid #e8d9ca;
+  border-radius: 15px;
+  background: #fffdf9;
+  box-shadow: 0 4px 14px rgba(82, 54, 34, 0.04);
+}
+
+.filter-card {
+  padding: 22px;
   margin-bottom: 20px;
 }
 
-.clear-filter-mini-btn {
-  background: #fff;
-  border: 1px solid #dcc2a7;
-  color: #8c5734;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.clear-filter-mini-btn:hover {
-  background: #8c5734;
-  color: #fff;
-}
-
-.stats-row {
+.filter-heading {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.stat-pill {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px;
-  background: rgba(255, 250, 244, 0.96);
-  border: 1px solid #dfc8b2;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(92, 57, 34, 0.07);
+  margin-bottom: 20px;
 }
 
-.overdue-pill {
-  border-color: #e5c3b9;
-  background: #fdf8f6;
+.filter-heading h2 {
+  margin: 0;
+  font-size: 18px;
 }
 
-.pill-icon {
-  font-size: 22px;
+.filter-heading p {
+  margin: 6px 0 0;
+  color: #8a7563;
+  font-size: 13px;
 }
 
-.stat-pill > div {
+.record-count {
+  border-radius: 20px;
+  padding: 7px 11px;
+  background: #f4e7d9;
+  color: #744b30;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(180px, 1fr);
+  gap: 15px;
+}
+
+.field {
   display: flex;
   flex-direction: column;
+  gap: 7px;
 }
 
-.pill-label {
-  color: #765b48;
+.field label {
+  color: #745a46;
   font-size: 12px;
-  font-weight: 600;
-}
-
-.stat-pill strong {
-  color: #4b3021;
-  font-size: 24px;
   font-weight: 700;
-  line-height: 1.2;
 }
 
-.filters-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.filter-select {
-  padding: 12px 14px;
-  background: rgba(255, 250, 244, 0.96);
-  border: 1px solid #dfc8b2;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #3f2b20;
+.field input,
+.field select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid #dfcdbb;
+  border-radius: 9px;
+  background: #fff;
+  color: #493122;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
   outline: none;
 }
 
-.filter-select:focus {
-  border-color: #a4876d;
-  box-shadow: 0 0 0 3px rgb(120 88 63 / 10%);
+.field input:focus,
+.field select:focus {
+  border-color: #b77a4b;
+  box-shadow: 0 0 0 3px rgba(183, 122, 75, 0.12);
 }
 
-.table-header-row {
+.table-card {
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.data-table th {
+  padding: 14px 15px;
+  background: #f5eadf;
+  color: #75563e;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+
+.data-table td {
+  padding: 15px;
+  border-top: 1px solid #f0e5da;
+  color: #5b4635;
+  font-size: 13px;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.clickable-row:hover {
+  background: #fcf5ed;
+}
+
+.clickable-row:focus-visible {
+  outline: 2px solid #b77a4b;
+  outline-offset: -2px;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ead5c1;
+  color: #744b30;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cell-stack strong {
+  color: #493122;
+  font-size: 13px;
+}
+
+.cell-stack small {
+  color: #9a8573;
+  font-size: 11px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 20px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status-active {
+  background: #e4f2e5;
+  color: #286b3b;
+}
+
+.status-overdue {
+  background: #fbe7e2;
+  color: #a63b2e;
+}
+
+.status-returned {
+  background: #e9e9ef;
+  color: #55536e;
+}
+
+.late-date {
+  color: #a63b2e !important;
+  font-weight: 800;
+}
+
+.table-footer {
+  padding: 13px 16px;
+  border-top: 1px solid #f0e5da;
+  color: #8a7563;
+  font-size: 12px;
+}
+
+.state-card {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.state-card h3 {
+  margin: 10px 0 5px;
+}
+
+.state-card p {
+  color: #8a7563;
+  font-size: 13px;
+}
+
+.empty-icon {
+  font-size: 30px;
+}
+
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #ead8c7;
+  border-top-color: #a16b45;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.message {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  padding: 13px 15px;
+  font-size: 13px;
 }
 
-.sort-info {
-  color: #816b58;
-  font-size: 12px;
+.error-message {
+  border: 1px solid #efc5bc;
+  background: #fff0ed;
+  color: #963b2e;
 }
 
-.loan-book-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.error-message button {
+  border: 1px solid #e6b0a5;
+  border-radius: 7px;
+  background: white;
+  color: inherit;
+  padding: 7px 10px;
+  cursor: pointer;
 }
 
-.user-id-cell {
-  display: inline-block;
-  max-width: 180px;
-  overflow-wrap: anywhere;
-  color: #76513a;
-  font-size: 12px;
-  font-weight: 600;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.overdue-date {
-  color: #a84d3d;
-  font-weight: 700;
+@media (max-width: 1050px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .search-field {
+    grid-column: 1 / -1;
+  }
 }
 
-@media (max-width: 768px) {
-  .filters-row {
+@media (max-width: 650px) {
+  .admin-main {
+    padding: 18px 12px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 13px;
+  }
+
+  .stat-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 17px;
+  }
+
+  .stat-card strong {
+    font-size: 20px;
+  }
+
+  .filters {
     grid-template-columns: 1fr;
   }
 
-  .table-wrapper {
-    overflow-x: auto;
+  .search-field {
+    grid-column: auto;
   }
 
-  .data-table {
-    min-width: 900px;
-  }
-
-  .sort-info {
-    margin-top: 4px;
+  .filter-card {
+    padding: 15px;
   }
 }
 </style>
